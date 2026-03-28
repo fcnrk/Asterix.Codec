@@ -1,0 +1,106 @@
+﻿schema_version: 1
+
+category: 253
+name: "CAT253 Structured-Explicit Application Items"
+
+items:
+  I253_100:
+    description: "Structured-explicit Application Data 1 — custom inner message"
+    content:
+
+      # ① Fixed: 16-bit track ID + 4-byte WGS-84 position
+      - id: position
+        type: fixed
+        length: 6
+        fields:
+          - name: track_id
+            type: uint
+            bits: 16
+          - name: latitude
+            type: int
+            bits: 16
+            scale: 180/65536
+          - name: longitude
+            type: int
+            bits: 16
+            scale: 360/65536
+
+      # ② Variable: transponder status flags (FX-extensible octets)
+      # Note: the FX bit in each group octet is handled implicitly by the codec —
+      # do NOT declare it as a named field here.
+      - id: transponder
+        type: variable
+        groups:
+          - fields:
+              - name: alert
+                type: bool
+                bits: 1
+              - name: spi
+                type: bool
+                bits: 1
+              - name: squawk
+                type: uint
+                bits: 4
+              - name: spare
+                type: uint
+                bits: 1
+          - fields:
+              - name: ssr_code
+                type: uint
+                bits: 7
+
+      # ③ Repetitive: sensor measurement list (count byte + N × 3-byte records)
+      - id: measurements
+        type: repetitive
+        count_field:
+          bits: 8
+        element:
+          type: fixed
+          length: 3
+          fields:
+            - name: sensor_id
+              type: uint
+              bits: 8
+            - name: quality
+              type: uint
+              bits: 8
+            - name: range
+              type: uint
+              bits: 8
+              scale: "10"
+
+      # ④ Compound: navigation data (altitude/speed/heading — each optional via FSPEC)
+      - id: nav_data
+        type: compound
+        fspec:
+          - nav_data/ALT
+          - nav_data/SPD
+          - nav_data/HDG
+        subitems:
+          nav_data/ALT:
+            type: fixed
+            length: 2
+            fields:
+              - name: altitude
+                type: int
+                bits: 16
+                scale: "0.25"
+          nav_data/SPD:
+            type: fixed
+            length: 2
+            fields:
+              - name: speed
+                type: uint
+                bits: 16
+                scale: "0.01"
+          nav_data/HDG:
+            type: fixed
+            length: 2
+            fields:
+              - name: heading
+                type: uint
+                bits: 12
+                scale: "360/4096"
+              - name: spare
+                type: uint
+                bits: 4

@@ -1,0 +1,314 @@
+schema_version: 1
+
+category: 62
+name: "System Track Data"
+
+messages:
+  - id: default
+    name: "CAT062 Default Message"
+    discriminator: null
+
+    uap:
+      - I062_010
+      - I062_015
+      - I062_040
+      - I062_060
+      - I062_070
+      - I062_105
+      - I062_100
+      - I062_185
+      - I062_210
+      - I062_245
+      - I062_380
+      - I062_290
+      - SP
+
+items:
+
+  # ----------------------------------------------------------
+  # I062/010 - Data Source Identifier
+  # ----------------------------------------------------------
+  I062_010:
+    type: fixed
+    length: 2
+    fields:
+      - name: sac
+        type: uint
+        bits: 8
+      - name: sic
+        type: uint
+        bits: 8
+
+  # ----------------------------------------------------------
+  # I062/015 - Service Identification
+  # ----------------------------------------------------------
+  I062_015:
+    type: fixed
+    length: 1
+    fields:
+      - name: service_id
+        type: uint
+        bits: 8
+
+  # ----------------------------------------------------------
+  # I062/040 - Track Number
+  # ----------------------------------------------------------
+  I062_040:
+    type: fixed
+    length: 2
+    fields:
+      - name: track_number
+        type: uint
+        bits: 16
+
+  # ----------------------------------------------------------
+  # I062/060 - Mode 3/A Code
+  # ----------------------------------------------------------
+  I062_060:
+    type: fixed
+    length: 2
+    fields:
+      - name: v
+        type: bool
+        bit: 0
+      - name: g
+        type: bool
+        bit: 1
+      - name: l
+        type: bool
+        bit: 2
+      - name: mode3a
+        type: uint
+        bits: 12
+        bit: 4
+
+  # ----------------------------------------------------------
+  # I062/070 - Time of Track Information
+  # ----------------------------------------------------------
+  I062_070:
+    type: fixed
+    length: 3
+    fields:
+      - name: time
+        type: uint
+        bits: 24
+        scale: 1/128
+
+  # ----------------------------------------------------------
+  # I062/105 - Calculated Position (WGS-84)
+  # ----------------------------------------------------------
+  I062_105:
+    type: fixed
+    length: 8
+    fields:
+      - name: latitude
+        type: int
+        bits: 32
+        scale: 180 / 2147483648
+      - name: longitude
+        type: int
+        bits: 32
+        scale: 180 / 2147483648
+
+  # ----------------------------------------------------------
+  # I062/100 - Track Velocity
+  # ----------------------------------------------------------
+  I062_100:
+    type: fixed
+    length: 4
+    fields:
+      - name: vx
+        type: int
+        bits: 16
+        scale: 1/4
+      - name: vy
+        type: int
+        bits: 16
+        scale: 1/4
+
+  # ----------------------------------------------------------
+  # I062/185 - Track Acceleration
+  # ----------------------------------------------------------
+  I062_185:
+    type: fixed
+    length: 2
+    fields:
+      - name: ax
+        type: int
+        bits: 8
+        scale: 1/4
+      - name: ay
+        type: int
+        bits: 8
+        scale: 1/4
+
+  # ----------------------------------------------------------
+  # I062/210 - Track Quality (Compound)
+  # ----------------------------------------------------------
+  I062_210:
+    type: compound
+
+    fspec:
+      - qx
+      - qy
+      - qvx
+      - qvy
+      - qax
+      - qay
+
+    subitems:
+
+      qx:
+        type: fixed
+        length: 1
+        fields:
+          - name: value
+            type: uint
+            bits: 8
+            scale: 0.25
+
+      qy:
+        type: fixed
+        length: 1
+        fields:
+          - name: value
+            type: uint
+            bits: 8
+            scale: 0.25
+
+      qvx:
+        type: fixed
+        length: 1
+        fields:
+          - name: value
+            type: uint
+            bits: 8
+            scale: 0.25
+
+      qvy:
+        type: fixed
+        length: 1
+        fields:
+          - name: value
+            type: uint
+            bits: 8
+            scale: 0.25
+
+      qax:
+        type: fixed
+        length: 1
+        fields:
+          - name: value
+            type: uint
+            bits: 8
+
+      qay:
+        type: fixed
+        length: 1
+        fields:
+          - name: value
+            type: uint
+            bits: 8
+
+  # ----------------------------------------------------------
+  # I062/245 - Target Identification
+  # ----------------------------------------------------------
+  I062_245:
+    type: fixed
+    length: 6
+    fields:
+      - name: callsign
+        type: string
+        encoding: ia5
+        length: 6
+
+  # ----------------------------------------------------------
+  # I062/290 - System Track Update Ages (Repetitive)
+  # ----------------------------------------------------------
+  I062_290:
+    type: repetitive
+
+    count_field:
+      bits: 8
+
+    element:
+      type: fixed
+      length: 2
+      fields:
+        - name: age
+          type: uint
+          bits: 16
+          scale: 1/128
+
+  # ----------------------------------------------------------
+  # I062/380 - Aircraft Derived Data (Compound)
+  # ----------------------------------------------------------
+  I062_380:
+    type: compound
+
+    fspec:
+      - adr
+      - id
+      - mhg
+      - ias
+      - tas
+      - sal
+
+    subitems:
+
+      adr:
+        type: fixed
+        length: 3
+        fields:
+          - name: address
+            type: uint
+            bits: 24
+
+      id:
+        type: fixed
+        length: 6
+        fields:
+          - name: callsign
+            type: string
+            encoding: ia5
+            length: 6
+
+      mhg:
+        type: fixed
+        length: 2
+        fields:
+          - name: heading
+            type: uint
+            bits: 16
+            scale: 360 / 65536
+
+      ias:
+        type: fixed
+        length: 2
+        fields:
+          - name: indicated_airspeed
+            type: uint
+            bits: 16
+
+      tas:
+        type: fixed
+        length: 2
+        fields:
+          - name: true_airspeed
+            type: uint
+            bits: 16
+
+      sal:
+        type: fixed
+        length: 2
+        fields:
+          - name: selected_altitude
+            type: int
+            bits: 16
+            scale: 25
+
+  # ----------------------------------------------------------
+  # SP - Special Purpose Field
+  # ----------------------------------------------------------
+  SP:
+    type: explicit

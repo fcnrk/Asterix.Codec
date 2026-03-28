@@ -1,0 +1,49 @@
+﻿schema_version: 1
+
+category: 253
+name: "ASTERIX Category 253 — Custom"
+
+discriminator:
+  item: I253_010
+  field: message_type
+
+messages:
+  - id: msg001
+    name: "Message Type 001 — Status"
+    discriminator: "1"
+    uap:
+      - I253_010
+      - I253_001
+
+  - id: msg100
+    name: "Message Type 100 — Structured-Explicit Application Data"
+    discriminator: "100"
+    uap:
+      - I253_010
+      - I253_100
+
+items:
+  # ── Discriminator (shared across all messages) ──────────────────────────
+  I253_010:
+    type: fixed
+    length: 1
+    fields:
+      - name: message_type
+        type: uint
+        bits: 8
+
+  # ── Type 001 ─────────────────────────────────────────────────────────────
+  I253_001:
+    type: fixed
+    length: 2
+    fields:
+      - name: status
+        type: uint
+        bits: 16
+
+  # ── Type 100: structured-explicit container ─────────────────────────────
+  # Inner structure is defined in structured_explicit_cat253.yml.
+  # At Build() time, this explicit placeholder is substituted with the
+  # StructuredExplicitItemDefinition loaded from that file.
+  I253_100:
+    type: explicit

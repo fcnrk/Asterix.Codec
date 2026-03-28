@@ -1,0 +1,102 @@
+schema_version: 1
+
+spf_field_sets:
+
+  SPF_CUSTOM_062:
+    type: spf
+    description: "Custom SPF field set for CAT062 with dynamic presence and repetitive F1 structure"
+
+    structure:
+
+      # ----------------------------------------------------------
+      # Length of SPF block (bytes, including header)
+      # ----------------------------------------------------------
+      - name: length
+        type: uint
+        bits: 16
+
+      # ----------------------------------------------------------
+      # Number of F1 records
+      # ----------------------------------------------------------
+      - name: f1RecordCount
+        type: uint
+        bits: 8
+
+      # ----------------------------------------------------------
+      # F1 Repetitive Structure
+      # Each entry: f2 + f3
+      # ----------------------------------------------------------
+      - name: f1
+        type: repetitive
+        count_ref: f1RecordCount
+
+        element:
+          type: group
+          fields:
+            - name: f2
+              type: uint
+              bits: 8
+
+            - name: f3
+              type: uint
+              bits: 8
+
+      # ----------------------------------------------------------
+      # Presence flags for dynamic fields (F4..Fn)
+      # Each field uses 1 byte (uint8)
+      # ----------------------------------------------------------
+      - name: presence
+        type: dynamic_presence
+        bit_width: 8
+
+        fields:
+          - f4
+          - f5
+          - f6
+          - f7
+          - f8
+
+      # ----------------------------------------------------------
+      # Conditionally present fields (F4..Fn)
+      # ----------------------------------------------------------
+
+      - name: f4
+        type: optional
+        present_if: presence.f4
+
+        field:
+          type: uint
+          bits: 8
+
+      - name: f5
+        type: optional
+        present_if: presence.f5
+
+        field:
+          type: uint
+          bits: 8
+
+      - name: f6
+        type: optional
+        present_if: presence.f6
+
+        field:
+          type: uint
+          bits: 16
+
+      - name: f7
+        type: optional
+        present_if: presence.f7
+
+        field:
+          type: uint
+          bits: 32
+
+      - name: f8
+        type: optional
+        present_if: presence.f8
+
+        field:
+          type: string
+          encoding: ascii
+          length: 4
