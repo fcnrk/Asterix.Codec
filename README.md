@@ -4,6 +4,8 @@ A .NET library for encoding and decoding [Eurocontrol ASTERIX](https://www.euroc
 
 **Targets:** `netstandard2.0` (.NET Framework 4.6.1+, Mono) and `net9.0`.
 
+**License:** [MIT](LICENSE)
+
 ---
 
 ## Table of contents
