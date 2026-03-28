@@ -1,10 +1,10 @@
 # Asterix.Codec
 
+<a href="https://github.com/JCodesMore/ai-website-cloner-template/blob/master/LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue" alt="MIT License" /></a> [![Latest Release on Github](https://img.shields.io/badge/release-v0.1.0--alpha.1-orange)](https://github.com/fcnrk/Asterix.Codec/releases/latest)
+
 A .NET library for encoding and decoding [Eurocontrol ASTERIX](https://www.eurocontrol.int/asterix) binary messages. Fully schema-driven: category definitions and custom SPF field sets are loaded from YAML files at startup, with no category-specific logic in the library itself.
 
 **Targets:** `netstandard2.0` (.NET Framework 4.6.1+, Mono) and `net9.0`.
-
-**License:** [MIT](LICENSE)
 
 ---
 
