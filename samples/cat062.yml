@@ -11,17 +11,32 @@ messages:
     uap:
       - I062_010
       - I062_015
-      - I062_040
-      - I062_060
       - I062_070
       - I062_105
       - I062_100
       - I062_185
       - I062_210
+      - I062_060
       - I062_245
       - I062_380
+      - I062_040
+      - I062_080
       - I062_290
+      - I062_200
+      - I062_295
+      - I062_136
+      - I062_130
+      - I062_135
+      - I062_220
+      - I062_390
+      - I062_270
+      - I062_300
+      - I062_110
+      - I062_120
       - I062_510
+      - I062_500
+      - I062_340
+      - RE
       - SP
 
 items:
@@ -75,7 +90,7 @@ items:
       - name: g
         type: bool
         bit: 1
-      - name: l
+      - name: ch
         type: bool
         bit: 2
       - name: mode3a
@@ -96,6 +111,117 @@ items:
         scale: 1/128
 
   # ----------------------------------------------------------
+  # I062/080 - Track Status
+  # (Variable-length, up to 7 FX-extended octets)
+  # ----------------------------------------------------------
+  I062_080:
+    type: variable
+    groups:
+      - fields:
+          - name: mon
+            type: bool
+          - name: spi
+            type: bool
+          - name: mrh
+            type: bool
+          - name: src
+            type: uint
+            bits: 3
+          - name: cnf
+            type: bool
+      - fields:
+          - name: sim
+            type: bool
+          - name: tse
+            type: bool
+          - name: tsb
+            type: bool
+          - name: fpc
+            type: bool
+          - name: aff
+            type: bool
+          - name: stp
+            type: bool
+          - name: kos
+            type: bool
+      - fields:
+          - name: ama
+            type: bool
+          - name: md4
+            type: uint
+            bits: 2
+          - name: me
+            type: bool
+          - name: mi
+            type: bool
+          - name: md5
+            type: uint
+            bits: 2
+      - fields:
+          - name: cst
+            type: bool
+          - name: psr
+            type: bool
+          - name: ssr
+            type: bool
+          - name: mds
+            type: bool
+          - name: ads
+            type: bool
+          - name: suc
+            type: bool
+          - name: aac
+            type: bool
+      - fields:
+          - name: sds
+            type: uint
+            bits: 2
+          - name: ems
+            type: uint
+            bits: 3
+          - name: pft
+            type: bool
+          - name: fplt
+            type: bool
+      - fields:
+          - name: dupt
+            type: bool
+          - name: dupf
+            type: bool
+          - name: dupm
+            type: bool
+          - name: sfc
+            type: bool
+          - name: idd
+            type: bool
+          - name: iec
+            type: bool
+          - name: mlat
+            type: bool
+      - fields:
+          - name: m5i
+            type: bool
+          - name: spare
+            type: uint
+            bits: 6
+
+  # ----------------------------------------------------------
+  # I062/100 - Calculated Track Position (Cartesian)
+  # ----------------------------------------------------------
+  I062_100:
+    type: fixed
+    length: 6
+    fields:
+      - name: x
+        type: int
+        bits: 24
+        scale: 0.5
+      - name: y
+        type: int
+        bits: 24
+        scale: 0.5
+
+  # ----------------------------------------------------------
   # I062/105 - Calculated Position (WGS-84)
   # ----------------------------------------------------------
   I062_105:
@@ -105,144 +231,839 @@ items:
       - name: latitude
         type: int
         bits: 32
-        scale: 180 / 2147483648
+        scale: 180 / 33554432
       - name: longitude
         type: int
         bits: 32
-        scale: 180 / 2147483648
+        scale: 180 / 33554432
 
   # ----------------------------------------------------------
-  # I062/100 - Track Velocity
+  # I062/110 - Mode 5 Data Reports & Extended Mode 1 Code
   # ----------------------------------------------------------
-  I062_100:
+  I062_110:
+    type: compound
+
+    fspec:
+      - sum
+      - pmn
+      - pos
+      - ga
+      - em1
+      - tos
+      - xp
+
+    subitems:
+
+      sum:
+        type: fixed
+        length: 1
+        fields:
+          - name: m5
+            type: bool
+          - name: id
+            type: bool
+          - name: da
+            type: bool
+          - name: m1
+            type: bool
+          - name: m2
+            type: bool
+          - name: m3
+            type: bool
+          - name: mc
+            type: bool
+          - name: x
+            type: bool
+
+      pmn:
+        type: fixed
+        length: 4
+        fields:
+          - name: spare1
+            type: uint
+            bits: 2
+          - name: pin
+            type: uint
+            bits: 14
+          - name: spare2
+            type: uint
+            bits: 3
+          - name: nat
+            type: uint
+            bits: 5
+          - name: spare3
+            type: uint
+            bits: 2
+          - name: mis
+            type: uint
+            bits: 6
+
+      pos:
+        type: fixed
+        length: 6
+        fields:
+          - name: latitude
+            type: int
+            bits: 24
+            scale: 180 / 8388608
+          - name: longitude
+            type: int
+            bits: 24
+            scale: 180 / 8388608
+
+      ga:
+        type: fixed
+        length: 2
+        fields:
+          - name: spare
+            type: uint
+            bits: 1
+          - name: res
+            type: bool
+          - name: ga
+            type: int
+            bits: 14
+            scale: 25
+
+      em1:
+        type: fixed
+        length: 2
+        fields:
+          - name: spare
+            type: uint
+            bits: 4
+          - name: em1
+            type: uint
+            bits: 12
+
+      tos:
+        type: fixed
+        length: 1
+        fields:
+          - name: value
+            type: int
+            bits: 8
+            scale: 1/128
+
+      xp:
+        type: fixed
+        length: 1
+        fields:
+          - name: spare
+            type: uint
+            bits: 3
+          - name: x5
+            type: bool
+          - name: xc
+            type: bool
+          - name: x3
+            type: bool
+          - name: x2
+            type: bool
+          - name: x1
+            type: bool
+
+  # ----------------------------------------------------------
+  # I062/120 - Track Mode 2 Code
+  # ----------------------------------------------------------
+  I062_120:
+    type: fixed
+    length: 2
+    fields:
+      - name: spare
+        type: uint
+        bits: 4
+      - name: mode2
+        type: uint
+        bits: 12
+
+  # ----------------------------------------------------------
+  # I062/130 - Calculated Track Geometric Altitude
+  # ----------------------------------------------------------
+  I062_130:
+    type: fixed
+    length: 2
+    fields:
+      - name: altitude
+        type: int
+        bits: 16
+        scale: 6.25
+
+  # ----------------------------------------------------------
+  # I062/135 - Calculated Track Barometric Altitude
+  # ----------------------------------------------------------
+  I062_135:
+    type: fixed
+    length: 2
+    fields:
+      - name: qnh
+        type: bool
+      - name: ctba
+        type: int
+        bits: 15
+        scale: 0.25
+
+  # ----------------------------------------------------------
+  # I062/136 - Measured Flight Level
+  # ----------------------------------------------------------
+  I062_136:
+    type: fixed
+    length: 2
+    fields:
+      - name: mfl
+        type: int
+        bits: 16
+        scale: 0.25
+
+  # ----------------------------------------------------------
+  # I062/185 - Calculated Track Velocity (Cartesian)
+  # ----------------------------------------------------------
+  I062_185:
     type: fixed
     length: 4
     fields:
       - name: vx
         type: int
         bits: 16
-        scale: 1/4
+        scale: 0.25
       - name: vy
         type: int
         bits: 16
-        scale: 1/4
+        scale: 0.25
 
   # ----------------------------------------------------------
-  # I062/185 - Track Acceleration
+  # I062/200 - Mode of Movement
   # ----------------------------------------------------------
-  I062_185:
+  I062_200:
+    type: fixed
+    length: 1
+    fields:
+      - name: trans
+        type: uint
+        bits: 2
+      - name: long
+        type: uint
+        bits: 2
+      - name: vert
+        type: uint
+        bits: 2
+      - name: adf
+        type: bool
+      - name: spare
+        type: uint
+        bits: 1
+
+  # ----------------------------------------------------------
+  # I062/210 - Calculated Acceleration (Cartesian)
+  # ----------------------------------------------------------
+  I062_210:
     type: fixed
     length: 2
     fields:
       - name: ax
         type: int
         bits: 8
-        scale: 1/4
+        scale: 0.25
       - name: ay
         type: int
         bits: 8
-        scale: 1/4
+        scale: 0.25
 
   # ----------------------------------------------------------
-  # I062/210 - Track Quality (Compound)
+  # I062/220 - Calculated Rate Of Climb/Descent
   # ----------------------------------------------------------
-  I062_210:
-    type: compound
-
-    fspec:
-      - qx
-      - qy
-      - qvx
-      - qvy
-      - qax
-      - qay
-
-    subitems:
-
-      qx:
-        type: fixed
-        length: 1
-        fields:
-          - name: value
-            type: uint
-            bits: 8
-            scale: 0.25
-
-      qy:
-        type: fixed
-        length: 1
-        fields:
-          - name: value
-            type: uint
-            bits: 8
-            scale: 0.25
-
-      qvx:
-        type: fixed
-        length: 1
-        fields:
-          - name: value
-            type: uint
-            bits: 8
-            scale: 0.25
-
-      qvy:
-        type: fixed
-        length: 1
-        fields:
-          - name: value
-            type: uint
-            bits: 8
-            scale: 0.25
-
-      qax:
-        type: fixed
-        length: 1
-        fields:
-          - name: value
-            type: uint
-            bits: 8
-
-      qay:
-        type: fixed
-        length: 1
-        fields:
-          - name: value
-            type: uint
-            bits: 8
+  I062_220:
+    type: fixed
+    length: 2
+    fields:
+      - name: rate
+        type: int
+        bits: 16
+        scale: 6.25
 
   # ----------------------------------------------------------
   # I062/245 - Target Identification
   # ----------------------------------------------------------
   I062_245:
     type: fixed
-    length: 6
+    length: 7
     fields:
+      - name: sti
+        type: uint
+        bits: 2
+      - name: spare
+        type: uint
+        bits: 6
       - name: callsign
         type: string
         encoding: ia5
         length: 6
 
   # ----------------------------------------------------------
-  # I062/290 - System Track Update Ages (Repetitive)
+  # I062/270 - Target Size & Orientation
+  # (Variable-length, up to 3 FX-extended octets)
+  # ----------------------------------------------------------
+  I062_270:
+    type: variable
+    groups:
+      - fields:
+          - name: length
+            type: uint
+            bits: 7
+            scale: 1.0
+      - fields:
+          - name: orientation
+            type: uint
+            bits: 7
+            scale: 2.8125
+      - fields:
+          - name: width
+            type: uint
+            bits: 7
+            scale: 1.0
+
+  # ----------------------------------------------------------
+  # I062/290 - System Track Update Ages (Compound)
   # ----------------------------------------------------------
   I062_290:
-    type: repetitive
+    type: compound
 
-    count_field:
-      bits: 8
+    fspec:
+      - trk
+      - psr
+      - ssr
+      - mds
+      - ads
+      - es
+      - vdl
+      - uat
+      - lop
+      - mlt
 
-    element:
-      type: fixed
-      length: 2
-      fields:
-        - name: age
-          type: uint
-          bits: 16
-          scale: 1/128
+    subitems:
+
+      trk:
+        type: fixed
+        length: 1
+        fields:
+          - name: value
+            type: uint
+            bits: 8
+            scale: 0.25
+
+      psr:
+        type: fixed
+        length: 1
+        fields:
+          - name: value
+            type: uint
+            bits: 8
+            scale: 0.25
+
+      ssr:
+        type: fixed
+        length: 1
+        fields:
+          - name: value
+            type: uint
+            bits: 8
+            scale: 0.25
+
+      mds:
+        type: fixed
+        length: 1
+        fields:
+          - name: value
+            type: uint
+            bits: 8
+            scale: 0.25
+
+      ads:
+        type: fixed
+        length: 2
+        fields:
+          - name: value
+            type: uint
+            bits: 16
+            scale: 0.25
+
+      es:
+        type: fixed
+        length: 1
+        fields:
+          - name: value
+            type: uint
+            bits: 8
+            scale: 0.25
+
+      vdl:
+        type: fixed
+        length: 1
+        fields:
+          - name: value
+            type: uint
+            bits: 8
+            scale: 0.25
+
+      uat:
+        type: fixed
+        length: 1
+        fields:
+          - name: value
+            type: uint
+            bits: 8
+            scale: 0.25
+
+      lop:
+        type: fixed
+        length: 1
+        fields:
+          - name: value
+            type: uint
+            bits: 8
+            scale: 0.25
+
+      mlt:
+        type: fixed
+        length: 1
+        fields:
+          - name: value
+            type: uint
+            bits: 8
+            scale: 0.25
 
   # ----------------------------------------------------------
-  # I062/380 - Aircraft Derived Data (Compound)
+  # I062/295 - Track Data Ages (Compound, up to 5-octet FSPEC)
+  # All subfields: 1 octet, uint, LSB = 1/4 s
+  # ----------------------------------------------------------
+  I062_295:
+    type: compound
+
+    fspec:
+      - mfl
+      - md1
+      - md2
+      - mda
+      - md4
+      - md5
+      - mhg
+      - ias
+      - tas
+      - sal
+      - fss
+      - tid
+      - com
+      - sab
+      - acs
+      - bvr
+      - gvr
+      - ran
+      - tar
+      - tan
+      - gsp
+      - vun
+      - met
+      - emc
+      - pos
+      - gal
+      - pun
+      - mb
+      - iar
+      - mac
+      - bps
+
+    subitems:
+
+      mfl:
+        type: fixed
+        length: 1
+        fields:
+          - name: value
+            type: uint
+            bits: 8
+            scale: 0.25
+
+      md1:
+        type: fixed
+        length: 1
+        fields:
+          - name: value
+            type: uint
+            bits: 8
+            scale: 0.25
+
+      md2:
+        type: fixed
+        length: 1
+        fields:
+          - name: value
+            type: uint
+            bits: 8
+            scale: 0.25
+
+      mda:
+        type: fixed
+        length: 1
+        fields:
+          - name: value
+            type: uint
+            bits: 8
+            scale: 0.25
+
+      md4:
+        type: fixed
+        length: 1
+        fields:
+          - name: value
+            type: uint
+            bits: 8
+            scale: 0.25
+
+      md5:
+        type: fixed
+        length: 1
+        fields:
+          - name: value
+            type: uint
+            bits: 8
+            scale: 0.25
+
+      mhg:
+        type: fixed
+        length: 1
+        fields:
+          - name: value
+            type: uint
+            bits: 8
+            scale: 0.25
+
+      ias:
+        type: fixed
+        length: 1
+        fields:
+          - name: value
+            type: uint
+            bits: 8
+            scale: 0.25
+
+      tas:
+        type: fixed
+        length: 1
+        fields:
+          - name: value
+            type: uint
+            bits: 8
+            scale: 0.25
+
+      sal:
+        type: fixed
+        length: 1
+        fields:
+          - name: value
+            type: uint
+            bits: 8
+            scale: 0.25
+
+      fss:
+        type: fixed
+        length: 1
+        fields:
+          - name: value
+            type: uint
+            bits: 8
+            scale: 0.25
+
+      tid:
+        type: fixed
+        length: 1
+        fields:
+          - name: value
+            type: uint
+            bits: 8
+            scale: 0.25
+
+      com:
+        type: fixed
+        length: 1
+        fields:
+          - name: value
+            type: uint
+            bits: 8
+            scale: 0.25
+
+      sab:
+        type: fixed
+        length: 1
+        fields:
+          - name: value
+            type: uint
+            bits: 8
+            scale: 0.25
+
+      acs:
+        type: fixed
+        length: 1
+        fields:
+          - name: value
+            type: uint
+            bits: 8
+            scale: 0.25
+
+      bvr:
+        type: fixed
+        length: 1
+        fields:
+          - name: value
+            type: uint
+            bits: 8
+            scale: 0.25
+
+      gvr:
+        type: fixed
+        length: 1
+        fields:
+          - name: value
+            type: uint
+            bits: 8
+            scale: 0.25
+
+      ran:
+        type: fixed
+        length: 1
+        fields:
+          - name: value
+            type: uint
+            bits: 8
+            scale: 0.25
+
+      tar:
+        type: fixed
+        length: 1
+        fields:
+          - name: value
+            type: uint
+            bits: 8
+            scale: 0.25
+
+      tan:
+        type: fixed
+        length: 1
+        fields:
+          - name: value
+            type: uint
+            bits: 8
+            scale: 0.25
+
+      gsp:
+        type: fixed
+        length: 1
+        fields:
+          - name: value
+            type: uint
+            bits: 8
+            scale: 0.25
+
+      vun:
+        type: fixed
+        length: 1
+        fields:
+          - name: value
+            type: uint
+            bits: 8
+            scale: 0.25
+
+      met:
+        type: fixed
+        length: 1
+        fields:
+          - name: value
+            type: uint
+            bits: 8
+            scale: 0.25
+
+      emc:
+        type: fixed
+        length: 1
+        fields:
+          - name: value
+            type: uint
+            bits: 8
+            scale: 0.25
+
+      pos:
+        type: fixed
+        length: 1
+        fields:
+          - name: value
+            type: uint
+            bits: 8
+            scale: 0.25
+
+      gal:
+        type: fixed
+        length: 1
+        fields:
+          - name: value
+            type: uint
+            bits: 8
+            scale: 0.25
+
+      pun:
+        type: fixed
+        length: 1
+        fields:
+          - name: value
+            type: uint
+            bits: 8
+            scale: 0.25
+
+      mb:
+        type: fixed
+        length: 1
+        fields:
+          - name: value
+            type: uint
+            bits: 8
+            scale: 0.25
+
+      iar:
+        type: fixed
+        length: 1
+        fields:
+          - name: value
+            type: uint
+            bits: 8
+            scale: 0.25
+
+      mac:
+        type: fixed
+        length: 1
+        fields:
+          - name: value
+            type: uint
+            bits: 8
+            scale: 0.25
+
+      bps:
+        type: fixed
+        length: 1
+        fields:
+          - name: value
+            type: uint
+            bits: 8
+            scale: 0.25
+
+  # ----------------------------------------------------------
+  # I062/300 - Vehicle Fleet Identification
+  # ----------------------------------------------------------
+  I062_300:
+    type: fixed
+    length: 1
+    fields:
+      - name: vfi
+        type: uint
+        bits: 8
+
+  # ----------------------------------------------------------
+  # I062/340 - Measured Information (Compound)
+  # ----------------------------------------------------------
+  I062_340:
+    type: compound
+
+    fspec:
+      - sid
+      - pos
+      - hei
+      - mdc
+      - mda
+      - typ
+
+    subitems:
+
+      sid:
+        type: fixed
+        length: 2
+        fields:
+          - name: sac
+            type: uint
+            bits: 8
+          - name: sic
+            type: uint
+            bits: 8
+
+      pos:
+        type: fixed
+        length: 4
+        fields:
+          - name: rho
+            type: uint
+            bits: 16
+            scale: 0.00390625
+          - name: theta
+            type: uint
+            bits: 16
+            scale: 0.0054932
+
+      hei:
+        type: fixed
+        length: 2
+        fields:
+          - name: value
+            type: int
+            bits: 16
+            scale: 25
+
+      mdc:
+        type: fixed
+        length: 2
+        fields:
+          - name: v
+            type: bool
+          - name: g
+            type: bool
+          - name: spare
+            type: uint
+            bits: 2
+          - name: code
+            type: uint
+            bits: 12
+
+      mda:
+        type: fixed
+        length: 2
+        fields:
+          - name: v
+            type: bool
+          - name: g
+            type: bool
+          - name: l
+            type: bool
+          - name: spare
+            type: uint
+            bits: 1
+          - name: code
+            type: uint
+            bits: 12
+
+      typ:
+        type: fixed
+        length: 1
+        fields:
+          - name: typ
+            type: uint
+            bits: 3
+          - name: sim
+            type: bool
+          - name: rab
+            type: bool
+          - name: tst
+            type: bool
+          - name: spare
+            type: uint
+            bits: 2
+
+  # ----------------------------------------------------------
+  # I062/380 - Aircraft Derived Data (Compound, up to 4-octet FSPEC)
   # ----------------------------------------------------------
   I062_380:
     type: compound
@@ -254,6 +1075,27 @@ items:
       - ias
       - tas
       - sal
+      - fss
+      - tid
+      - com
+      - sab
+      - acs
+      - bvr
+      - gvr
+      - ran
+      - tar
+      - tan
+      - gsp
+      - vun
+      - met
+      - emc
+      - pos
+      - gal
+      - pun
+      - mb
+      - iar
+      - mac
+      - bps
 
     subitems:
 
@@ -281,15 +1123,17 @@ items:
           - name: heading
             type: uint
             bits: 16
-            scale: 360 / 65536
+            scale: 0.0054932
 
       ias:
         type: fixed
         length: 2
         fields:
+          - name: im
+            type: bool
           - name: indicated_airspeed
             type: uint
-            bits: 16
+            bits: 15
 
       tas:
         type: fixed
@@ -303,17 +1147,610 @@ items:
         type: fixed
         length: 2
         fields:
+          - name: sas
+            type: bool
+          - name: source
+            type: uint
+            bits: 2
           - name: selected_altitude
             type: int
-            bits: 16
+            bits: 13
             scale: 25
+
+      fss:
+        type: fixed
+        length: 2
+        fields:
+          - name: mv
+            type: bool
+          - name: ah
+            type: bool
+          - name: am
+            type: bool
+          - name: altitude
+            type: int
+            bits: 13
+            scale: 25
+
+      tid:
+        type: fixed
+        length: 15
+        fields:
+          - name: tca
+            type: bool
+          - name: nc
+            type: bool
+          - name: tcp_number
+            type: uint
+            bits: 6
+          - name: altitude
+            type: int
+            bits: 16
+            scale: 10
+          - name: lat
+            type: int
+            bits: 24
+            scale: 180 / 8388608
+          - name: lon
+            type: int
+            bits: 24
+            scale: 180 / 8388608
+          - name: ptyp
+            type: uint
+            bits: 4
+          - name: td
+            type: uint
+            bits: 2
+          - name: tra
+            type: bool
+          - name: toc
+            type: bool
+          - name: tov
+            type: uint
+            bits: 24
+            scale: 1.0
+          - name: ttov
+            type: uint
+            bits: 16
+            scale: 0.01
+
+      com:
+        type: fixed
+        length: 2
+        fields:
+          - name: com
+            type: uint
+            bits: 3
+          - name: stat
+            type: uint
+            bits: 3
+          - name: spare1
+            type: uint
+            bits: 2
+          - name: mssc
+            type: bool
+          - name: arc
+            type: bool
+          - name: aic
+            type: bool
+          - name: b1a
+            type: bool
+          - name: b1b
+            type: uint
+            bits: 4
+
+      sab:
+        type: fixed
+        length: 2
+        fields:
+          - name: ac
+            type: uint
+            bits: 2
+          - name: mn
+            type: uint
+            bits: 2
+          - name: dc
+            type: uint
+            bits: 2
+          - name: spare1
+            type: uint
+            bits: 2
+          - name: spare2
+            type: uint
+            bits: 8
+
+      acs:
+        type: fixed
+        length: 7
+        fields:
+          - name: data
+            type: uint
+            bits: 56
+
+      bvr:
+        type: fixed
+        length: 2
+        fields:
+          - name: value
+            type: int
+            bits: 16
+            scale: 6.25
+
+      gvr:
+        type: fixed
+        length: 2
+        fields:
+          - name: value
+            type: int
+            bits: 16
+            scale: 6.25
+
+      ran:
+        type: fixed
+        length: 1
+        fields:
+          - name: value
+            type: int
+            bits: 8
+            scale: 2.8125
+
+      tar:
+        type: fixed
+        length: 2
+        fields:
+          - name: value
+            type: int
+            bits: 12
+            scale: 0.125
+
+      tan:
+        type: fixed
+        length: 2
+        fields:
+          - name: value
+            type: uint
+            bits: 12
+            scale: 0.0879
+
+      gsp:
+        type: fixed
+        length: 2
+        fields:
+          - name: value
+            type: uint
+            bits: 16
+            scale: 0.220779
+
+      vun:
+        type: fixed
+        length: 1
+        fields:
+          - name: value
+            type: uint
+            bits: 8
+
+      met:
+        type: fixed
+        length: 8
+        fields:
+          - name: wsi
+            type: bool
+          - name: spare
+            type: uint
+            bits: 7
+          - name: wd
+            type: uint
+            bits: 16
+            scale: 1.0
+          - name: ws
+            type: uint
+            bits: 16
+            scale: 1.0
+          - name: temp
+            type: int
+            bits: 16
+            scale: 0.25
+          - name: turb
+            type: uint
+            bits: 8
+
+      emc:
+        type: fixed
+        length: 1
+        fields:
+          - name: value
+            type: uint
+            bits: 8
+
+      pos:
+        type: fixed
+        length: 6
+        fields:
+          - name: latitude
+            type: int
+            bits: 24
+            scale: 180 / 8388608
+          - name: longitude
+            type: int
+            bits: 24
+            scale: 180 / 8388608
+
+      gal:
+        type: fixed
+        length: 2
+        fields:
+          - name: value
+            type: int
+            bits: 16
+            scale: 6.25
+
+      pun:
+        type: fixed
+        length: 1
+        fields:
+          - name: spare
+            type: uint
+            bits: 4
+          - name: pun
+            type: uint
+            bits: 4
+
+      mb:
+        type: repetitive
+        count_field:
+          bits: 8
+        element:
+          type: fixed
+          length: 8
+          fields:
+            - name: bds_data
+              type: uint
+              bits: 56
+            - name: bds1
+              type: uint
+              bits: 4
+            - name: bds2
+              type: uint
+              bits: 4
+
+      iar:
+        type: fixed
+        length: 2
+        fields:
+          - name: value
+            type: uint
+            bits: 16
+
+      mac:
+        type: fixed
+        length: 2
+        fields:
+          - name: value
+            type: uint
+            bits: 16
+            scale: 0.008
+
+      bps:
+        type: fixed
+        length: 2
+        fields:
+          - name: spare
+            type: uint
+            bits: 4
+          - name: bps
+            type: uint
+            bits: 12
+            scale: 0.1
+
+  # ----------------------------------------------------------
+  # I062/390 - Flight Plan Related Data (Compound)
+  # ----------------------------------------------------------
+  I062_390:
+    type: compound
+
+    fspec:
+      - tag
+      - cs
+      - ifn
+      - toc
+      - wkt
+      - flt
+      - rte
+      - rfl
+      - cfl
+      - org
+      - dst
+      - dos
+      - sts
+      - std
+      - sta
+      - pem
+      - pec
+
+    subitems:
+
+      tag:
+        type: fixed
+        length: 2
+        fields:
+          - name: sac
+            type: uint
+            bits: 8
+          - name: sic
+            type: uint
+            bits: 8
+
+      cs:
+        type: fixed
+        length: 7
+        fields:
+          - name: callsign
+            type: string
+            encoding: ascii
+            length: 7
+
+      ifn:
+        type: fixed
+        length: 4
+        fields:
+          - name: value
+            type: uint
+            bits: 32
+
+      toc:
+        type: fixed
+        length: 1
+        fields:
+          - name: gatoat
+            type: uint
+            bits: 2
+          - name: fr1fr2
+            type: uint
+            bits: 2
+          - name: rvsm
+            type: uint
+            bits: 2
+          - name: hpl
+            type: uint
+            bits: 2
+
+      wkt:
+        type: fixed
+        length: 1
+        fields:
+          - name: value
+            type: uint
+            bits: 8
+
+      flt:
+        type: fixed
+        length: 1
+        fields:
+          - name: value
+            type: uint
+            bits: 8
+
+      rte:
+        type: fixed
+        length: 7
+        fields:
+          - name: route
+            type: string
+            encoding: ascii
+            length: 7
+
+      rfl:
+        type: fixed
+        length: 2
+        fields:
+          - name: value
+            type: int
+            bits: 16
+            scale: 0.25
+
+      cfl:
+        type: fixed
+        length: 2
+        fields:
+          - name: value
+            type: int
+            bits: 16
+            scale: 0.25
+
+      org:
+        type: fixed
+        length: 4
+        fields:
+          - name: dep
+            type: string
+            encoding: ascii
+            length: 4
+
+      dst:
+        type: fixed
+        length: 4
+        fields:
+          - name: dst
+            type: string
+            encoding: ascii
+            length: 4
+
+      dos:
+        type: fixed
+        length: 4
+        fields:
+          - name: value
+            type: uint
+            bits: 32
+
+      sts:
+        type: fixed
+        length: 1
+        fields:
+          - name: emp
+            type: uint
+            bits: 2
+          - name: avl
+            type: uint
+            bits: 2
+          - name: spare
+            type: uint
+            bits: 4
+
+      std:
+        type: fixed
+        length: 7
+        fields:
+          - name: sid
+            type: string
+            encoding: ascii
+            length: 7
+
+      sta:
+        type: fixed
+        length: 7
+        fields:
+          - name: star
+            type: string
+            encoding: ascii
+            length: 7
+
+      pem:
+        type: fixed
+        length: 2
+        fields:
+          - name: spare
+            type: uint
+            bits: 4
+          - name: va
+            type: bool
+          - name: mode3a
+            type: uint
+            bits: 12
+          - name: spare2
+            type: uint
+            bits: 3
+
+      pec:
+        type: fixed
+        length: 7
+        fields:
+          - name: callsign
+            type: string
+            encoding: ascii
+            length: 7
+
+  # ----------------------------------------------------------
+  # I062/500 - Estimated Accuracies (Compound)
+  # ----------------------------------------------------------
+  I062_500:
+    type: compound
+
+    fspec:
+      - apc
+      - cov
+      - apw
+      - aga
+      - aba
+      - atv
+      - aa
+      - arc
+
+    subitems:
+
+      apc:
+        type: fixed
+        length: 4
+        fields:
+          - name: x
+            type: uint
+            bits: 16
+            scale: 0.5
+          - name: y
+            type: uint
+            bits: 16
+            scale: 0.5
+
+      cov:
+        type: fixed
+        length: 2
+        fields:
+          - name: value
+            type: int
+            bits: 16
+            scale: 0.5
+
+      apw:
+        type: fixed
+        length: 4
+        fields:
+          - name: latitude
+            type: uint
+            bits: 16
+            scale: 180 / 33554432
+          - name: longitude
+            type: uint
+            bits: 16
+            scale: 180 / 33554432
+
+      aga:
+        type: fixed
+        length: 1
+        fields:
+          - name: value
+            type: uint
+            bits: 8
+            scale: 6.25
+
+      aba:
+        type: fixed
+        length: 1
+        fields:
+          - name: value
+            type: uint
+            bits: 8
+            scale: 0.25
+
+      atv:
+        type: fixed
+        length: 2
+        fields:
+          - name: x
+            type: uint
+            bits: 8
+            scale: 0.25
+          - name: y
+            type: uint
+            bits: 8
+            scale: 0.25
+
+      aa:
+        type: fixed
+        length: 2
+        fields:
+          - name: x
+            type: uint
+            bits: 8
+            scale: 0.25
+          - name: y
+            type: uint
+            bits: 8
+            scale: 0.25
+
+      arc:
+        type: fixed
+        length: 1
+        fields:
+          - name: value
+            type: uint
+            bits: 8
+            scale: 6.25
 
   # ----------------------------------------------------------
   # I062/510 - Composed Track Number (FSPEC-Repetitive)
   #
-  # Lists the track numbers assigned by each contributing SDPS
-  # in a multi-SDPS fusion scenario.  The number of entries is
-  # driven by the inner FSPEC (one set bit = one entry).
+  # Each element is 3 bytes: SAC(8b) + SIC(8b) + track_number(15b) + FX(1b).
+  # The number of entries is driven by the inner FSPEC byte.
   # ----------------------------------------------------------
   I062_510:
     type: fspec_repetitive
@@ -330,6 +1767,12 @@ items:
         - name: track_number
           type: uint
           bits: 16
+
+  # ----------------------------------------------------------
+  # RE - Reserved Expansion Field
+  # ----------------------------------------------------------
+  RE:
+    type: explicit
 
   # ----------------------------------------------------------
   # SP - Special Purpose Field

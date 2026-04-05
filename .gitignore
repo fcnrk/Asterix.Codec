@@ -91,3 +91,4 @@ publish/
 # claude
 **/CLAUDE.md
 .claude/
+**/superpowers/

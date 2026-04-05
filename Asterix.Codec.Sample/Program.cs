@@ -21,14 +21,16 @@ Console.WriteLine($"Loaded schemas from: {schemasDir}");
 Console.WriteLine();
 
 // Demo 1: Decode simple fixed items
+// UAP: I062_010=FRN1 (octet1 bit7), I062_040=FRN11 (octet2 bit4)
+// FSPEC octet1: 0x81 = I062_010 present + FX; octet2: 0x10 = I062_040 present
 Console.WriteLine("--- Demo 1: Fixed items (I062_010 + I062_040) ---");
 
 byte[] simplePacket =
 [
-    0x3E, 0x00, 0x08, // CAT=62, LEN=8
-    0xA0, // FSPEC: I062_010 + I062_040
-    0x01, 0x02, // I062_010: SAC=1, SIC=2
-    0x12, 0x34, // I062_040: track_number=4660
+    0x3E, 0x00, 0x09, // CAT=62, LEN=9
+    0x81, 0x10,       // FSPEC: I062_010(FRN1) + FX + I062_040(FRN11)
+    0x01, 0x02,       // I062_010: SAC=1, SIC=2
+    0x12, 0x34,       // I062_040: track_number=4660
 ];
 
 AsterixPacket decoded = codec.Decode(simplePacket);
@@ -40,40 +42,66 @@ PrintFixed(rec, "I062_040");
 Console.WriteLine();
 
 // Demo 2: Decode with time (I062_070, scaled field)
+// UAP: I062_010=FRN1 (oct1 bit7), I062_070=FRN3 (oct1 bit5), I062_040=FRN11 (oct2 bit4)
+// Data order follows FRN order: I062_010, I062_070, I062_040
 Console.WriteLine("--- Demo 2: Scaled time field (I062_070) ---");
 
 byte[] timePacket =
 [
-    0x3E, 0x00, 0x0B, // CAT=62, LEN=11
-    0xA8, // FSPEC: I062_010 + I062_040 + I062_070
-    0x01, 0x02, // I062_010
-    0x12, 0x34, // I062_040
+    0x3E, 0x00, 0x0C, // CAT=62, LEN=12
+    0xA1, 0x10,       // FSPEC: I062_010(FRN1)+I062_070(FRN3)+FX + I062_040(FRN11)
+    0x01, 0x02,       // I062_010: SAC=1, SIC=2
     0x00, 0x25, 0x80, // I062_070: raw=9600 → 9600/128 = 75.0 s
+    0x12, 0x34,       // I062_040: track_number=4660
 ];
 
 rec = codec.Decode(timePacket).Records[0];
 PrintFixed(rec, "I062_010");
-PrintFixed(rec, "I062_040");
 PrintFixed(rec, "I062_070");
+PrintFixed(rec, "I062_040");
 Console.WriteLine();
 
-// Demo 3: Decode compound item (I062_210 track quality)
-Console.WriteLine("--- Demo 3: Compound item (I062_210 track quality) ---");
+// Demo 3: Decode fixed acceleration item (I062_210 Calculated Acceleration)
+// UAP: I062_010=FRN1 (oct1 bit7), I062_210=FRN7 (oct1 bit1)
+// FSPEC single byte: 0x82 = I062_010(bit7) + I062_210(bit1), FX=0
+// I062_210 is 2B fixed: ax=int8 scale 0.25, ay=int8 scale 0.25
+Console.WriteLine("--- Demo 3: Fixed acceleration item (I062_210) ---");
 
 byte[] compoundPacket =
 [
-    0x3E, 0x00, 0x0A, // CAT=62, LEN=10
-    0x81, 0x40, // FSPEC: I062_010 + I062_210
-    0x01, 0x02, // I062_010
-    0xC0, 0x04, 0x08, // I062_210: inner FSPEC(qx+qy), qx=4→1.0, qy=8→2.0
+    0x3E, 0x00, 0x08, // CAT=62, LEN=8
+    0x82,             // FSPEC: I062_010(FRN1) + I062_210(FRN7), no FX
+    0x01, 0x02,       // I062_010: SAC=1, SIC=2
+    0x04, 0x08,       // I062_210: ax=4→1.0 m/s², ay=8→2.0 m/s²
 ];
 
 rec = codec.Decode(compoundPacket).Records[0];
 PrintFixed(rec, "I062_010");
-if (rec.TryGet("I062_210", out var compItem) && compItem is CompoundDecodedItem compound)
+PrintFixed(rec, "I062_210");
+Console.WriteLine();
+
+// Demo 4: Decode compound item (I062_290 System Track Update Ages)
+// UAP: I062_010=FRN1 (oct1 bit7), I062_290=FRN13 (oct2 bit2)
+// FSPEC: 0x81 (I062_010+FX) + 0x04 (I062_290)
+// I062_290 is compound: FSPEC byte then subitems (trk + psr)
+Console.WriteLine("--- Demo 4: Compound item (I062_290 system track update ages) ---");
+
+byte[] repetitivePacket =
+[
+    0x3E, 0x00, 0x0A, // CAT=62, LEN=10
+    0x81, 0x04,       // FSPEC: I062_010(FRN1)+FX + I062_290(FRN13)
+    0x01, 0x02,       // I062_010: SAC=1, SIC=2
+    0xC0,             // I062_290 inner FSPEC: trk(bit7)+psr(bit6) present, FX=0
+    0x28,             // I062_290/trk: raw=40 → 40×0.25=10.0 s
+    0x14,             // I062_290/psr: raw=20 → 20×0.25=5.0 s
+];
+
+rec = codec.Decode(repetitivePacket).Records[0];
+PrintFixed(rec, "I062_010");
+if (rec.TryGet("I062_290", out var repItem) && repItem is CompoundDecodedItem compI290)
 {
-    Console.WriteLine("  I062_210 (compound):");
-    foreach (var (subId, subItem) in compound.Subitems)
+    Console.WriteLine($"  I062_290 (compound, {compI290.Subitems.Count} subitems):");
+    foreach (var (subId, subItem) in compI290.Subitems)
     {
         if (subItem is FixedDecodedItem fi)
         {
@@ -87,45 +115,19 @@ if (rec.TryGet("I062_210", out var compItem) && compItem is CompoundDecodedItem 
 
 Console.WriteLine();
 
-// Demo 4: Decode repetitive item (I062_290 track ages) 
-Console.WriteLine("--- Demo 4: Repetitive item (I062_290 track ages) ---");
-
-byte[] repetitivePacket =
-[
-    0x3E, 0x00, 0x0C, // CAT=62, LEN=12
-    0x81, 0x08, // FSPEC: I062_010 + I062_290
-    0x01, 0x02, // I062_010
-    0x02, 0x01, 0x00, 0x02, 0x00, // I062_290: count=2, age[0]=2.0s, age[1]=4.0s
-];
-
-rec = codec.Decode(repetitivePacket).Records[0];
-PrintFixed(rec, "I062_010");
-if (rec.TryGet("I062_290", out var repItem) && repItem is RepetitiveDecodedItem repetitive)
-{
-    Console.WriteLine($"  I062_290 (repetitive, {repetitive.Count} elements):");
-    for (int i = 0; i < repetitive.Count; i++)
-    {
-        if (repetitive.Elements[i] is FixedDecodedItem elem)
-        {
-            Console.Write($"    [{i}]:");
-            foreach (var f in elem.Fields)
-                Console.Write($"  {f}");
-            Console.WriteLine();
-        }
-    }
-}
-
-Console.WriteLine();
-
-// Demo 5: Decode IA5 callsign (I062_245)
+// Demo 5: Decode IA5 callsign (I062_245 Target Identification)
+// UAP: I062_010=FRN1 (oct1 bit7), I062_245=FRN9 (oct2 bit6)
+// FSPEC: 0x81 (I062_010+FX) + 0x40 (I062_245)
+// I062_245 = 1B header (sti 2b + spare 6b) + 6B callsign (8×6-bit IA5 = "BAW123  ")
 Console.WriteLine("--- Demo 5: IA5 string field (I062_245 callsign) ---");
 
 byte[] callsignPacket =
 [
-    0x3E, 0x00, 0x0D,
-    0x81, 0x20, // FSPEC: I062_010 + I062_245
-    0x01, 0x02, // I062_010
-    0x08, 0x15, 0xF1, 0xCB, 0x38, 0x20, // I062_245: "BAW123  " (IA5 6-bit packed)
+    0x3E, 0x00, 0x0E,             // CAT=62, LEN=14
+    0x81, 0x40,                   // FSPEC: I062_010(FRN1)+FX + I062_245(FRN9)
+    0x01, 0x02,                   // I062_010: SAC=1, SIC=2
+    0x00,                         // I062_245 header: sti=0, spare=0
+    0x08, 0x15, 0xF1, 0xCB, 0x38, 0x20, // I062_245 callsign: "BAW123" (IA5 6-bit packed)
 ];
 
 rec = codec.Decode(callsignPacket).Records[0];
@@ -197,7 +199,7 @@ var fullRecord = new DecodedRecord(new Dictionary<string, DecodedItem>
     [
         new DecodedField("v", 0, null, null),
         new DecodedField("g", 0, null, null),
-        new DecodedField("l", 0, null, null),
+        new DecodedField("ch", 0, null, null),
         new DecodedField("mode3a", 0x123, null, null)
     ]),
 
@@ -208,59 +210,69 @@ var fullRecord = new DecodedRecord(new Dictionary<string, DecodedItem>
         new DecodedField("time", 9600, 75.0, null)
     ]),
 
-    // I062/105 - Calculated Position WGS-84  (signed int32, scale 180/2^31)
-    // lat raw 0x20000000 → 536870912 * 180/2^31 =  45.0°
-    // lon raw 0x04000000 →  67108864 * 180/2^31 =  5.625°
+    // I062/105 - Calculated Position WGS-84  (signed int32, scale 180/2^25)
+    // lat raw 0x02625A00 → 40000000 * 180/33554432 ≈  214.577°  (demo values)
+    // lon raw 0x009C4000 →  10240000 * 180/33554432 ≈  54.932°
     ["I062_105"] = new FixedDecodedItem(
     [
-        new DecodedField("latitude", 0x20000000, 45.0, null),
-        new DecodedField("longitude", 0x04000000, 5.625, null)
+        new DecodedField("latitude",  0x02625A00, null, null),
+        new DecodedField("longitude", 0x009C4000, null, null)
     ]),
 
-    // I062/100 - Track Velocity  (signed int16, scale 1/4 m/s)
-    // vx raw 400 → 100.0 m/s   vy raw 200 → 50.0 m/s
+    // I062/100 - Calculated Track Position (Cartesian, signed int24, scale 0.5 m)
+    // x raw 1000 → 500.0 m   y raw 800 → 400.0 m
     ["I062_100"] = new FixedDecodedItem(
     [
-        new DecodedField("vx", 400, 100.0, null),
-        new DecodedField("vy", 200, 50.0, null)
+        new DecodedField("x", 1000, 500.0, null),
+        new DecodedField("y",  800, 400.0, null)
     ]),
 
-    // I062/185 - Track Acceleration  (signed int8, scale 1/4 m/s²)
-    // ax raw 4 → 1.0 m/s²   ay raw 4 → 1.0 m/s²
+    // I062/185 - Calculated Track Velocity (Cartesian, signed int16, scale 0.25 m/s)
+    // vx raw 400 → 100.0 m/s   vy raw 200 → 50.0 m/s
     ["I062_185"] = new FixedDecodedItem(
     [
-        new DecodedField("ax", 4, 1.0, null),
-        new DecodedField("ay", 4, 1.0, null)
+        new DecodedField("vx", 400, 100.0, null),
+        new DecodedField("vy", 200,  50.0, null)
     ]),
 
-    // I062/210 - Track Quality (compound: qx, qy, qvx, qvy; scale 0.25)
-    ["I062_210"] = new CompoundDecodedItem(new Dictionary<string, DecodedItem>
-    {
-        ["qx"] = new FixedDecodedItem([new DecodedField("value", 4, 1.0, null)]),
-        ["qy"] = new FixedDecodedItem([new DecodedField("value", 8, 2.0, null)]),
-        ["qvx"] = new FixedDecodedItem([new DecodedField("value", 2, 0.5, null)]),
-        ["qvy"] = new FixedDecodedItem([new DecodedField("value", 2, 0.5, null)])
-    }),
+    // I062/210 - Calculated Acceleration (Cartesian, signed int8, scale 0.25 m/s²)
+    // ax raw 4 → 1.0 m/s²   ay raw 0xFC (signed -4) → -1.0 m/s²
+    ["I062_210"] = new FixedDecodedItem(
+    [
+        new DecodedField("ax", 4,    1.0, null),
+        new DecodedField("ay", 0xFC, null, null)  // -4 as unsigned byte → -1.0 m/s² after scale
+    ]),
 
-    // I062/245 - Target Identification (IA5 callsign, 6 bytes)
+    // I062/245 - Target Identification (2b STI + 6b spare + 8×6b IA5 callsign)
     ["I062_245"] = new FixedDecodedItem(
     [
-        new DecodedField("callsign", 0, null, "BAW123")
+        new DecodedField("sti",      0, null, null),
+        new DecodedField("spare",    0, null, null),
+        new DecodedField("callsign", 0, null, "BAW123  ")
     ]),
 
     // I062/380 - Aircraft Derived Data (compound: adr + id)
     ["I062_380"] = new CompoundDecodedItem(new Dictionary<string, DecodedItem>
     {
         ["adr"] = new FixedDecodedItem([new DecodedField("address", 0xABCDEF, null, null)]),
-        ["id"] = new FixedDecodedItem([new DecodedField("callsign", 0, null, "TEST12")])
+        ["id"]  = new FixedDecodedItem([new DecodedField("callsign", 0, null, "TEST12")])
     }),
 
-    // I062/290 - Track Update Ages (repetitive; scale 1/128 s)
-    // age[0] raw 256 → 2.0 s   age[1] raw 512 → 4.0 s
-    ["I062_290"] = new RepetitiveDecodedItem(
+    // I062/290 - System Track Update Ages (compound; scale 0.25 s)
+    // trk age raw 40 → 10.0 s   psr age raw 20 → 5.0 s
+    ["I062_290"] = new CompoundDecodedItem(new Dictionary<string, DecodedItem>
+    {
+        ["trk"] = new FixedDecodedItem([new DecodedField("value", 40, 10.0, null)]),
+        ["psr"] = new FixedDecodedItem([new DecodedField("value", 20,  5.0, null)])
+    }),
+
+    // I062/510 - Composed Track Number (fspec_repetitive: 3 contributing SDPS)
+    // Element: SAC(8b) + SIC(8b) + track_number(16b); inner FSPEC drives count
+    ["I062_510"] = new FspecRepetitiveDecodedItem(
     [
-        new FixedDecodedItem([new DecodedField("age", 256, 2.0, null)]),
-        new FixedDecodedItem([new DecodedField("age", 512, 4.0, null)])
+        new FixedDecodedItem([new DecodedField("sac", 1, null, null), new DecodedField("sic", 2, null, null), new DecodedField("track_number", 100, null, null)]),
+        new FixedDecodedItem([new DecodedField("sac", 3, null, null), new DecodedField("sic", 4, null, null), new DecodedField("track_number", 200, null, null)]),
+        new FixedDecodedItem([new DecodedField("sac", 5, null, null), new DecodedField("sic", 6, null, null), new DecodedField("track_number", 300, null, null)])
     ]),
 
     // SP - Special Purpose Field (explicit wrapper around SPF_CUSTOM_062 block)
@@ -283,10 +295,11 @@ PrintFixed(dr, "I062_070");
 PrintFixed(dr, "I062_105");
 PrintFixed(dr, "I062_100");
 PrintFixed(dr, "I062_185");
-PrintCompound(dr, "I062_210");
+PrintFixed(dr, "I062_210");
 PrintFixed(dr, "I062_245");
 PrintCompound(dr, "I062_380");
-PrintRepetitive(dr, "I062_290");
+PrintCompound(dr, "I062_290");
+PrintFspecRepetitive(dr, "I062_510");
 
 if (dr.TryGet("SP", out var spRaw) && spRaw is ExplicitDecodedItem spExplicit)
 {
@@ -526,6 +539,26 @@ static void PrintCompound(DecodedRecord r, string itemId)
         {
             Console.Write($"    {subId}:");
             foreach (var f in fi.Fields) Console.Write($"  {f}");
+            Console.WriteLine();
+        }
+    }
+}
+
+static void PrintFspecRepetitive(DecodedRecord r, string itemId)
+{
+    if (!r.TryGet(itemId, out var item) || item is not FspecRepetitiveDecodedItem rep)
+    {
+        Console.WriteLine($"  {itemId}: (not present)");
+        return;
+    }
+
+    Console.WriteLine($"  {itemId} (fspec_repetitive, {rep.Count} elements):");
+    for (int i = 0; i < rep.Count; i++)
+    {
+        if (rep.Elements[i] is FixedDecodedItem elem)
+        {
+            Console.Write($"    [{i}]:");
+            foreach (var f in elem.Fields) Console.Write($"  {f}");
             Console.WriteLine();
         }
     }
