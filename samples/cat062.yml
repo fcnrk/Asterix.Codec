@@ -21,6 +21,7 @@ messages:
       - I062_245
       - I062_380
       - I062_290
+      - I062_510
       - SP
 
 items:
@@ -306,6 +307,29 @@ items:
             type: int
             bits: 16
             scale: 25
+
+  # ----------------------------------------------------------
+  # I062/510 - Composed Track Number (FSPEC-Repetitive)
+  #
+  # Lists the track numbers assigned by each contributing SDPS
+  # in a multi-SDPS fusion scenario.  The number of entries is
+  # driven by the inner FSPEC (one set bit = one entry).
+  # ----------------------------------------------------------
+  I062_510:
+    type: fspec_repetitive
+    element:
+      type: fixed
+      length: 4
+      fields:
+        - name: sac
+          type: uint
+          bits: 8
+        - name: sic
+          type: uint
+          bits: 8
+        - name: track_number
+          type: uint
+          bits: 16
 
   # ----------------------------------------------------------
   # SP - Special Purpose Field

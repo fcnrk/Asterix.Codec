@@ -294,6 +294,10 @@ public static class YamlSchemaLoader
 
             "explicit" => new ExplicitItemDefinition(),
 
+            "fspec_repetitive" => new FspecRepetitiveItemDefinition(
+                MapItem(dto.Element ?? throw new SchemaLoadException(hint,
+                    "FspecRepetitive item missing 'element'."), hint)),
+
             _ => throw new SchemaLoadException(hint, $"Unknown item type '{dto.Type}'.")
         };
     }

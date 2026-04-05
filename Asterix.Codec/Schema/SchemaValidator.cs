@@ -111,6 +111,9 @@ internal static class SchemaValidator
     {
         if (definition is CompoundItemDefinition compound)
             ValidateCompound(itemId, compound, schema, path);
+
+        if (definition is FspecRepetitiveItemDefinition fspecRep)
+            ValidateItem($"{itemId}.element", fspecRep.Element, schema, path);
     }
 
     private static void ValidateCompound(

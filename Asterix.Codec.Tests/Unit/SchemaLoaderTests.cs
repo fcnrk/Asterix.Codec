@@ -31,8 +31,8 @@ public class SchemaLoaderTests
     {
         var schema = YamlSchemaLoader.LoadCategory(SamplesPath("cat062.yml"));
 
-        // 13 items: I062_010..I062_290 + SP
-        schema.Items.Should().HaveCount(13);
+        // 14 items: I062_010..I062_380 + I062_510 + SP
+        schema.Items.Should().HaveCount(14);
     }
 
     [Fact]

@@ -37,6 +37,7 @@ internal static class ItemDecoderDispatcher
             RepetitiveItemDefinition rep => RepetitiveItemDecoder.Decode(ref reader, rep, itemPath, mode),
             VariableItemDefinition variable => VariableItemDecoder.Decode(ref reader, variable, itemPath, mode),
             StructuredExplicitItemDefinition seItem => StructuredExplicitItemDecoder.Decode(ref reader, seItem, itemPath, mode),
+            FspecRepetitiveItemDefinition fspecRep => FspecRepetitiveItemDecoder.Decode(ref reader, fspecRep, itemPath, mode),
             ExplicitItemDefinition => ExplicitItemDecoder.Decode(ref reader, itemPath),
 
             _ => throw new DecodeException(reader.ByteOffset, itemPath,

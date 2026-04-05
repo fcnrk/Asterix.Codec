@@ -92,6 +92,31 @@ internal static class PayloadFixtures
         0x02, 0x01, 0x00, 0x02, 0x00,  // I062_290: count=2, [256, 512]
     ];
 
+    // ── CAT062 with fspec-repetitive: I062_010 + I062_510 (2 entries) ─────────
+    //
+    // Record-level FSPEC:
+    //   byte 0: 0x81  (bit7=I062_010, FX=1)
+    //   byte 1: 0x04  (bit2=I062_510 at UAP pos 12, FX=0)
+    //
+    // I062_010:       0x01, 0x02        → SAC=1, SIC=2
+    //
+    // I062_510 inner FSPEC:
+    //   0xC0          (bits 7+6 set → 2 elements, FX=0)
+    //
+    // element[0]:     0x01, 0x02, 0x01, 0x00  → SAC=1, SIC=2, STN=256
+    // element[1]:     0x03, 0x04, 0x02, 0x00  → SAC=3, SIC=4, STN=512
+    //
+    // Total: 3 (header) + 2 (FSPEC) + 2 (I062_010) + 1+4+4 (I062_510) = 16
+    public static readonly byte[] Cat062WithFspecRepetitive =
+    [
+        0x3E, 0x00, 0x10,           // header: CAT=62, LEN=16
+        0x81, 0x04,                 // FSPEC: I062_010 + I062_510
+        0x01, 0x02,                 // I062_010: SAC=1, SIC=2
+        0xC0,                       // I062_510 inner FSPEC: 2 elements
+        0x01, 0x02, 0x01, 0x00,    // element[0]: SAC=1, SIC=2, STN=256
+        0x03, 0x04, 0x02, 0x00,    // element[1]: SAC=3, SIC=4, STN=512
+    ];
+
     // ── SPF_CUSTOM_062 raw block (not wrapped in CAT packet) ─────────────────
     //
     // Structure:

@@ -41,6 +41,9 @@ internal static class ItemEncoderDispatcher
             case (StructuredExplicitDecodedItem seItem, StructuredExplicitItemDefinition structuredExplicitDef):
                 StructuredExplicitItemEncoder.Encode(writer, seItem, structuredExplicitDef, itemPath);
                 break;
+            case (FspecRepetitiveDecodedItem fspecRepItem, FspecRepetitiveItemDefinition fspecRepDef):
+                FspecRepetitiveItemEncoder.Encode(writer, fspecRepItem, fspecRepDef, itemPath);
+                break;
             case (ExplicitDecodedItem explicitItem, ExplicitItemDefinition explicitDef):
                 ExplicitItemEncoder.Encode(writer, explicitItem, explicitDef, itemPath);
                 break;

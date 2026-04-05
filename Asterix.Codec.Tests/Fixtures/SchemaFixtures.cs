@@ -89,6 +89,14 @@ internal static class SchemaFixtures
             new("age", FieldType.UInt, 16, bitOffset: 0, scale: new ScaleFactor(1, 128)),
         ]));
 
+    public static FspecRepetitiveItemDefinition I062_510() => new(
+        new FixedItemDefinition(4,
+        [
+            new FieldDefinition("sac",          FieldType.UInt, 8,  bitOffset: 0),
+            new FieldDefinition("sic",          FieldType.UInt, 8,  bitOffset: 8),
+            new FieldDefinition("track_number", FieldType.UInt, 16, bitOffset: 16),
+        ]));
+
     public static CompoundItemDefinition I062_380() => new(
         fspec: ["adr", "id", "mhg", "ias", "tas", "sal"],
         subitems: new Dictionary<string, ItemDefinition>
@@ -115,7 +123,7 @@ internal static class SchemaFixtures
                 discriminator: null,
                 uap: ["I062_010","I062_015","I062_040","I062_060","I062_070",
                       "I062_105","I062_100","I062_185","I062_210","I062_245",
-                      "I062_380","I062_290"])
+                      "I062_380","I062_290","I062_510"])
         ],
         items: new Dictionary<string, ItemDefinition>
         {
@@ -131,6 +139,7 @@ internal static class SchemaFixtures
             ["I062_245"] = I062_245(),
             ["I062_380"] = I062_380(),
             ["I062_290"] = I062_290(),
+            ["I062_510"] = I062_510(),
         });
 
     // ── SPF_CUSTOM_062 ────────────────────────────────────────────────────────
