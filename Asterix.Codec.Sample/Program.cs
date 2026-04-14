@@ -507,6 +507,40 @@ bool rt100 = cat253Codec.RoundTrip(type100Encoded).SequenceEqual(type100Encoded)
 Console.WriteLine($"  Round-trip: {(rt100 ? "PASS" : "FAIL")}");
 Console.WriteLine();
 
+// Demo 9: CAT048 – fixed + variable + Mode-3/A decode
+// FSPEC 0xC8 = I048_010(FRN1) + I048_140(FRN2) + I048_070(FRN5), no extension
+// I048_010: SAC=1, SIC=5
+// I048_140: 12:00:00 UTC = 43200 s → 43200×128 = 5 529 600 = 0x549000
+// I048_070: V=0 G=0 L=0 spare=0 Mode-3/A=7000₈=0x0E00
+Console.WriteLine("--- Demo 9: CAT048 (fixed + Time of Day + Mode-3/A) ---");
+
+string cat048Path = Path.Combine(schemasDir, "cat048.yml");
+AsterixCodec cat048Codec = new AsterixCodecBuilder()
+    .AddCategoryFromYaml(cat048Path)
+    .WithMode(DecodeMode.Strict)
+    .Build();
+
+byte[] cat048Packet =
+[
+    0x30,                   // CAT = 48
+    0x00, 0x0B,             // LEN = 11
+    0xC8,                   // FSPEC: I048_010 | I048_140 | I048_070 (no FX)
+    0x01, 0x05,             // I048_010: SAC=1, SIC=5
+    0x54, 0x60, 0x00,       // I048_140: TOD = 12:00:00 UTC (5529600 × 1/128 s)
+    0x0E, 0x00,             // I048_070: Mode-3/A = 7000₈ (no V/G/L flags)
+];
+
+AsterixPacket cat048Decoded = cat048Codec.Decode(cat048Packet);
+DecodedRecord dr48 = cat048Decoded.Records[0];
+
+PrintFixed(dr48, "I048_010");
+PrintFixed(dr48, "I048_140");
+PrintFixed(dr48, "I048_070");
+
+bool rt9 = cat048Codec.RoundTrip(cat048Packet).SequenceEqual(cat048Packet);
+Console.WriteLine($"  Full packet round-trip: {(rt9 ? "PASS" : "FAIL")}");
+Console.WriteLine();
+
 Console.WriteLine("=== All demos complete ===");
 
 

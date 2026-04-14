@@ -1,0 +1,876 @@
+schema_version: 1
+
+category: 48
+name: "Monoradar Target Reports"
+
+messages:
+  - id: default
+    name: "CAT048 Default Message"
+    discriminator: null
+
+    uap:
+      - I048_010
+      - I048_140
+      - I048_020
+      - I048_040
+      - I048_070
+      - I048_090
+      - I048_130
+      - I048_220
+      - I048_240
+      - I048_250
+      - I048_161
+      - I048_042
+      - I048_200
+      - I048_170
+      - I048_210
+      - I048_030
+      - I048_080
+      - I048_100
+      - I048_110
+      - I048_120
+      - I048_230
+      - I048_260
+      - I048_055
+      - I048_050
+      - I048_065
+      - I048_060
+      - SP
+      - RE
+
+items:
+
+  # ----------------------------------------------------------
+  # I048/010 - Data Source Identifier
+  # 2 octets fixed: SAC(8) + SIC(8)
+  # ----------------------------------------------------------
+  I048_010:
+    type: fixed
+    length: 2
+    fields:
+      - name: sac
+        type: uint
+        bits: 8
+      - name: sic
+        type: uint
+        bits: 8
+
+  # ----------------------------------------------------------
+  # I048/020 - Target Report Descriptor
+  # Variable length (1 octet + extensions)
+  # Group 1: TYP(3), SIM(1), RDP(1), SPI(1), RAB(1)
+  # Group 2: TST(1), ERR(1), XPP(1), ME(1), MI(1), FOE/FRI(2)
+  # Group 3: ADSB(2), SCN(2), PAI(2), spare(1)
+  # Group 4: ACASXV(5), POXPR(2)
+  # Group 5: POACT(2), DTFXPR(2), DTFACT(2), spare(1)
+  # Group 6: IRMXPR(2), IRMACT(2), spare(3)
+  # ----------------------------------------------------------
+  I048_020:
+    type: variable
+    groups:
+      - fields:
+          - name: typ
+            type: uint
+            bits: 3
+          - name: sim
+            type: bool
+            bits: 1
+          - name: rdp
+            type: bool
+            bits: 1
+          - name: spi
+            type: bool
+            bits: 1
+          - name: rab
+            type: bool
+            bits: 1
+      - fields:
+          - name: tst
+            type: bool
+            bits: 1
+          - name: err
+            type: bool
+            bits: 1
+          - name: xpp
+            type: bool
+            bits: 1
+          - name: me
+            type: bool
+            bits: 1
+          - name: mi
+            type: bool
+            bits: 1
+          - name: foe_fri
+            type: uint
+            bits: 2
+      - fields:
+          - name: adsb
+            type: uint
+            bits: 2
+          - name: scn
+            type: uint
+            bits: 2
+          - name: pai
+            type: uint
+            bits: 2
+          - name: spare
+            type: uint
+            bits: 1
+      - fields:
+          - name: acasxv
+            type: uint
+            bits: 5
+          - name: poxpr
+            type: uint
+            bits: 2
+      - fields:
+          - name: poact
+            type: uint
+            bits: 2
+          - name: dtfxpr
+            type: uint
+            bits: 2
+          - name: dtfact
+            type: uint
+            bits: 2
+          - name: spare
+            type: uint
+            bits: 1
+      - fields:
+          - name: irmxpr
+            type: uint
+            bits: 2
+          - name: irmact
+            type: uint
+            bits: 2
+          - name: spare
+            type: uint
+            bits: 3
+
+  # ----------------------------------------------------------
+  # I048/030 - Warning/Error Conditions and Target Classification
+  # Variable length: 7-bit code per octet
+  # ----------------------------------------------------------
+  I048_030:
+    type: variable
+    groups:
+      - fields:
+          - name: code
+            type: uint
+            bits: 7
+
+  # ----------------------------------------------------------
+  # I048/040 - Measured Position in Slant Polar Coordinates
+  # 4 octets fixed: RHO(16) + THETA(16)
+  # RHO: LSB = 1/256 NM
+  # THETA: LSB = 360/65536 deg
+  # ----------------------------------------------------------
+  I048_040:
+    type: fixed
+    length: 4
+    fields:
+      - name: rho
+        type: uint
+        bits: 16
+        scale: "1/256"
+        unit: "NM"
+      - name: theta
+        type: uint
+        bits: 16
+        scale: "360/65536"
+        unit: "deg"
+
+  # ----------------------------------------------------------
+  # I048/042 - Calculated Position in Cartesian Coordinates
+  # 4 octets fixed: X(16) + Y(16), two's complement
+  # LSB = 1/128 NM
+  # ----------------------------------------------------------
+  I048_042:
+    type: fixed
+    length: 4
+    fields:
+      - name: x
+        type: int
+        bits: 16
+        scale: "1/128"
+        unit: "NM"
+      - name: y
+        type: int
+        bits: 16
+        scale: "1/128"
+        unit: "NM"
+
+  # ----------------------------------------------------------
+  # I048/050 - Mode-2 Code in Octal Representation
+  # 2 octets fixed: V(1) + G(1) + L(1) + spare(1) + mode2(12)
+  # ----------------------------------------------------------
+  I048_050:
+    type: fixed
+    length: 2
+    fields:
+      - name: v
+        type: bool
+        bits: 1
+      - name: g
+        type: bool
+        bits: 1
+      - name: l
+        type: bool
+        bits: 1
+      - name: spare
+        type: uint
+        bits: 1
+      - name: mode2
+        type: uint
+        bits: 12
+
+  # ----------------------------------------------------------
+  # I048/055 - Mode-1 Code in Octal Representation
+  # 1 octet fixed: V(1) + G(1) + L(1) + mode1(5)
+  # ----------------------------------------------------------
+  I048_055:
+    type: fixed
+    length: 1
+    fields:
+      - name: v
+        type: bool
+        bits: 1
+      - name: g
+        type: bool
+        bits: 1
+      - name: l
+        type: bool
+        bits: 1
+      - name: mode1
+        type: uint
+        bits: 5
+
+  # ----------------------------------------------------------
+  # I048/060 - Mode-2 Code Confidence Indicator
+  # 2 octets fixed: spare(4) + QA4(1) QA2(1) QA1(1) QB4(1) QB2(1) QB1(1) QC4(1) QC2(1) QC1(1) QD4(1) QD2(1) QD1(1)
+  # 0 = high quality, 1 = low quality
+  # ----------------------------------------------------------
+  I048_060:
+    type: fixed
+    length: 2
+    fields:
+      - name: spare
+        type: uint
+        bits: 4
+      - name: qa4
+        type: bool
+        bits: 1
+      - name: qa2
+        type: bool
+        bits: 1
+      - name: qa1
+        type: bool
+        bits: 1
+      - name: qb4
+        type: bool
+        bits: 1
+      - name: qb2
+        type: bool
+        bits: 1
+      - name: qb1
+        type: bool
+        bits: 1
+      - name: qc4
+        type: bool
+        bits: 1
+      - name: qc2
+        type: bool
+        bits: 1
+      - name: qc1
+        type: bool
+        bits: 1
+      - name: qd4
+        type: bool
+        bits: 1
+      - name: qd2
+        type: bool
+        bits: 1
+      - name: qd1
+        type: bool
+        bits: 1
+
+  # ----------------------------------------------------------
+  # I048/065 - Mode-1 Code Confidence Indicator
+  # 1 octet fixed: spare(3) + QA4(1) QA2(1) QA1(1) QB2(1) QB1(1)
+  # ----------------------------------------------------------
+  I048_065:
+    type: fixed
+    length: 1
+    fields:
+      - name: spare
+        type: uint
+        bits: 3
+      - name: qa4
+        type: bool
+        bits: 1
+      - name: qa2
+        type: bool
+        bits: 1
+      - name: qa1
+        type: bool
+        bits: 1
+      - name: qb2
+        type: bool
+        bits: 1
+      - name: qb1
+        type: bool
+        bits: 1
+
+  # ----------------------------------------------------------
+  # I048/070 - Mode-3/A Code in Octal Representation
+  # 2 octets fixed: V(1) + G(1) + L(1) + spare(1) + mode3a(12)
+  # ----------------------------------------------------------
+  I048_070:
+    type: fixed
+    length: 2
+    fields:
+      - name: v
+        type: bool
+        bits: 1
+      - name: g
+        type: bool
+        bits: 1
+      - name: l
+        type: bool
+        bits: 1
+      - name: spare
+        type: uint
+        bits: 1
+      - name: mode3a
+        type: uint
+        bits: 12
+
+  # ----------------------------------------------------------
+  # I048/080 - Mode-3/A Code Confidence Indicator
+  # 2 octets fixed: spare(4) + QA4..QD1(12)
+  # ----------------------------------------------------------
+  I048_080:
+    type: fixed
+    length: 2
+    fields:
+      - name: spare
+        type: uint
+        bits: 4
+      - name: qa4
+        type: bool
+        bits: 1
+      - name: qa2
+        type: bool
+        bits: 1
+      - name: qa1
+        type: bool
+        bits: 1
+      - name: qb4
+        type: bool
+        bits: 1
+      - name: qb2
+        type: bool
+        bits: 1
+      - name: qb1
+        type: bool
+        bits: 1
+      - name: qc4
+        type: bool
+        bits: 1
+      - name: qc2
+        type: bool
+        bits: 1
+      - name: qc1
+        type: bool
+        bits: 1
+      - name: qd4
+        type: bool
+        bits: 1
+      - name: qd2
+        type: bool
+        bits: 1
+      - name: qd1
+        type: bool
+        bits: 1
+
+  # ----------------------------------------------------------
+  # I048/090 - Flight Level in Binary Representation
+  # 2 octets fixed: V(1) + G(1) + FL(14, signed)
+  # LSB = 1/4 FL
+  # ----------------------------------------------------------
+  I048_090:
+    type: fixed
+    length: 2
+    fields:
+      - name: v
+        type: bool
+        bits: 1
+      - name: g
+        type: bool
+        bits: 1
+      - name: fl
+        type: int
+        bits: 14
+        scale: "1/4"
+        unit: "FL"
+
+  # ----------------------------------------------------------
+  # I048/100 - Mode-C Code and Code Confidence Indicator
+  # 4 octets fixed: V(1) + G(1) + spare(2) + mode_c(12) + spare(4) + QA4..QD1(12)
+  # mode_c is in Gray code notation
+  # ----------------------------------------------------------
+  I048_100:
+    type: fixed
+    length: 4
+    fields:
+      - name: v
+        type: bool
+        bits: 1
+      - name: g
+        type: bool
+        bits: 1
+      - name: spare
+        type: uint
+        bits: 2
+      - name: mode_c
+        type: uint
+        bits: 12
+      - name: spare2
+        type: uint
+        bits: 4
+      - name: qa4
+        type: bool
+        bits: 1
+      - name: qa2
+        type: bool
+        bits: 1
+      - name: qa1
+        type: bool
+        bits: 1
+      - name: qb4
+        type: bool
+        bits: 1
+      - name: qb2
+        type: bool
+        bits: 1
+      - name: qb1
+        type: bool
+        bits: 1
+      - name: qc4
+        type: bool
+        bits: 1
+      - name: qc2
+        type: bool
+        bits: 1
+      - name: qc1
+        type: bool
+        bits: 1
+      - name: qd4
+        type: bool
+        bits: 1
+      - name: qd2
+        type: bool
+        bits: 1
+      - name: qd1
+        type: bool
+        bits: 1
+
+  # ----------------------------------------------------------
+  # I048/110 - Height Measured by 3D Radar
+  # 2 octets fixed: spare(2) + height(14, signed)
+  # LSB = 25 ft, two's complement
+  # ----------------------------------------------------------
+  I048_110:
+    type: fixed
+    length: 2
+    fields:
+      - name: spare
+        type: uint
+        bits: 2
+      - name: height
+        type: int
+        bits: 14
+        scale: "25"
+        unit: "ft"
+
+  # ----------------------------------------------------------
+  # I048/120 - Radial Doppler Speed
+  # Compound: primary subfield selects optional subitems
+  # cal: Calculated Doppler Speed (2 octets)
+  # rds: Raw Doppler Speed (1+N*6 octets, repetitive)
+  # ----------------------------------------------------------
+  I048_120:
+    type: compound
+
+    fspec:
+      - cal
+      - rds
+
+    subitems:
+
+      cal:
+        type: fixed
+        length: 2
+        fields:
+          - name: d
+            type: bool
+            bits: 1
+          - name: spare
+            type: uint
+            bits: 5
+          - name: cal
+            type: int
+            bits: 10
+            scale: "1"
+            unit: "m/s"
+
+      rds:
+        type: repetitive
+        count_field:
+          bits: 8
+        element:
+          type: fixed
+          length: 6
+          fields:
+            - name: dop
+              type: int
+              bits: 16
+              scale: "1"
+              unit: "m/s"
+            - name: amb
+              type: uint
+              bits: 16
+              scale: "1"
+              unit: "m/s"
+            - name: frq
+              type: uint
+              bits: 16
+              scale: "1"
+              unit: "MHz"
+
+  # ----------------------------------------------------------
+  # I048/130 - Radar Plot Characteristics
+  # Compound: primary subfield selects up to 7 optional subitems
+  # srl: SSR Plot Runlength (1 octet, LSB = 360/8192 deg)
+  # srr: Number of Received Replies M(SSR) (1 octet)
+  # sam: Amplitude of (M)SSR Reply (1 octet, signed, dBm)
+  # prl: Primary Plot Runlength (1 octet, LSB = 360/8192 deg)
+  # pam: Amplitude of Primary Plot (1 octet, signed, dBm)
+  # rpd: Range difference PSR-SSR (1 octet, signed, LSB = 1/256 NM)
+  # apd: Azimuth difference PSR-SSR (1 octet, signed, LSB = 360/16384 deg)
+  # ----------------------------------------------------------
+  I048_130:
+    type: compound
+
+    fspec:
+      - srl
+      - srr
+      - sam
+      - prl
+      - pam
+      - rpd
+      - apd
+
+    subitems:
+
+      srl:
+        type: fixed
+        length: 1
+        fields:
+          - name: srl
+            type: uint
+            bits: 8
+            scale: "360/8192"
+            unit: "deg"
+
+      srr:
+        type: fixed
+        length: 1
+        fields:
+          - name: srr
+            type: uint
+            bits: 8
+
+      sam:
+        type: fixed
+        length: 1
+        fields:
+          - name: sam
+            type: int
+            bits: 8
+            scale: "1"
+            unit: "dBm"
+
+      prl:
+        type: fixed
+        length: 1
+        fields:
+          - name: prl
+            type: uint
+            bits: 8
+            scale: "360/8192"
+            unit: "deg"
+
+      pam:
+        type: fixed
+        length: 1
+        fields:
+          - name: pam
+            type: int
+            bits: 8
+            scale: "1"
+            unit: "dBm"
+
+      rpd:
+        type: fixed
+        length: 1
+        fields:
+          - name: rpd
+            type: int
+            bits: 8
+            scale: "1/256"
+            unit: "NM"
+
+      apd:
+        type: fixed
+        length: 1
+        fields:
+          - name: apd
+            type: int
+            bits: 8
+            scale: "360/16384"
+            unit: "deg"
+
+  # ----------------------------------------------------------
+  # I048/140 - Time of Day
+  # 3 octets fixed: TOD(24)
+  # LSB = 1/128 s (UTC, resets to 0 at midnight)
+  # ----------------------------------------------------------
+  I048_140:
+    type: fixed
+    length: 3
+    fields:
+      - name: tod
+        type: uint
+        bits: 24
+        scale: "1/128"
+        unit: "s"
+
+  # ----------------------------------------------------------
+  # I048/161 - Track Number
+  # 2 octets fixed: spare(4) + track_number(12)
+  # ----------------------------------------------------------
+  I048_161:
+    type: fixed
+    length: 2
+    fields:
+      - name: spare
+        type: uint
+        bits: 4
+      - name: track_number
+        type: uint
+        bits: 12
+
+  # ----------------------------------------------------------
+  # I048/170 - Track Status
+  # Variable length (1 octet + 1 extension)
+  # Group 1: CNF(1), RAD(2), DOU(1), MAH(1), CDM(2)
+  # Group 2: TRE(1), GHO(1), SUP(1), TCC(1), spare(3)
+  # ----------------------------------------------------------
+  I048_170:
+    type: variable
+    groups:
+      - fields:
+          - name: cnf
+            type: bool
+            bits: 1
+          - name: rad
+            type: uint
+            bits: 2
+          - name: dou
+            type: bool
+            bits: 1
+          - name: mah
+            type: bool
+            bits: 1
+          - name: cdm
+            type: uint
+            bits: 2
+      - fields:
+          - name: tre
+            type: bool
+            bits: 1
+          - name: gho
+            type: bool
+            bits: 1
+          - name: sup
+            type: bool
+            bits: 1
+          - name: tcc
+            type: bool
+            bits: 1
+          - name: spare
+            type: uint
+            bits: 3
+
+  # ----------------------------------------------------------
+  # I048/200 - Calculated Track Velocity in Polar Coordinates
+  # 4 octets fixed: groundspeed(16) + heading(16)
+  # groundspeed: LSB = 2^-14 NM/s
+  # heading: LSB = 360/65536 deg
+  # ----------------------------------------------------------
+  I048_200:
+    type: fixed
+    length: 4
+    fields:
+      - name: groundspeed
+        type: uint
+        bits: 16
+        scale: "1/16384"
+        unit: "NM/s"
+      - name: heading
+        type: uint
+        bits: 16
+        scale: "360/65536"
+        unit: "deg"
+
+  # ----------------------------------------------------------
+  # I048/210 - Track Quality
+  # 4 octets fixed: sigma_x(8) + sigma_y(8) + sigma_v(8) + sigma_h(8)
+  # sigma_x/y: LSB = 1/128 NM
+  # sigma_v: LSB = 2^-14 NM/s
+  # sigma_h: LSB = 360/4096 deg
+  # ----------------------------------------------------------
+  I048_210:
+    type: fixed
+    length: 4
+    fields:
+      - name: sigma_x
+        type: uint
+        bits: 8
+        scale: "1/128"
+        unit: "NM"
+      - name: sigma_y
+        type: uint
+        bits: 8
+        scale: "1/128"
+        unit: "NM"
+      - name: sigma_v
+        type: uint
+        bits: 8
+        scale: "1/16384"
+        unit: "NM/s"
+      - name: sigma_h
+        type: uint
+        bits: 8
+        scale: "360/4096"
+        unit: "deg"
+
+  # ----------------------------------------------------------
+  # I048/220 - Aircraft Address
+  # 3 octets fixed: 24-bit Mode S address
+  # ----------------------------------------------------------
+  I048_220:
+    type: fixed
+    length: 3
+    fields:
+      - name: aircraft_address
+        type: uint
+        bits: 24
+
+  # ----------------------------------------------------------
+  # I048/230 - Communications/ACAS Capability and Flight Status
+  # 2 octets fixed
+  # COM(3), STAT(3), SI(1), spare(1), MSSC(1), ARC(1), AIC(1), B1A(1), B1B(4)
+  # ----------------------------------------------------------
+  I048_230:
+    type: fixed
+    length: 2
+    fields:
+      - name: com
+        type: uint
+        bits: 3
+      - name: stat
+        type: uint
+        bits: 3
+      - name: si
+        type: bool
+        bits: 1
+      - name: spare
+        type: uint
+        bits: 1
+      - name: mssc
+        type: bool
+        bits: 1
+      - name: arc
+        type: bool
+        bits: 1
+      - name: aic
+        type: bool
+        bits: 1
+      - name: b1a
+        type: bool
+        bits: 1
+      - name: b1b
+        type: uint
+        bits: 4
+
+  # ----------------------------------------------------------
+  # I048/240 - Aircraft Identification
+  # 6 octets fixed: 8 characters IA5 (6 bits each = 48 bits)
+  # ----------------------------------------------------------
+  I048_240:
+    type: fixed
+    length: 6
+    fields:
+      - name: callsign
+        type: string
+        encoding: ia5
+        length: 6
+
+  # ----------------------------------------------------------
+  # I048/250 - BDS Register Data
+  # Repetitive: REP(8) + N * [bds_data(56) + bds1(4) + bds2(4)]
+  # Each element = 8 octets
+  # ----------------------------------------------------------
+  I048_250:
+    type: repetitive
+    count_field:
+      bits: 8
+    element:
+      type: fixed
+      length: 8
+      fields:
+        - name: bds_data
+          type: uint
+          bits: 56
+        - name: bds1
+          type: uint
+          bits: 4
+        - name: bds2
+          type: uint
+          bits: 4
+
+  # ----------------------------------------------------------
+  # I048/260 - ACAS Resolution Advisory Report
+  # 7 octets fixed: 56 bits of ACAS RA data
+  # ----------------------------------------------------------
+  I048_260:
+    type: fixed
+    length: 7
+    fields:
+      - name: acas_ra
+        type: uint
+        bits: 56
+
+  # ----------------------------------------------------------
+  # SP - Special Purpose Field
+  # ----------------------------------------------------------
+  SP:
+    type: explicit
+
+  # ----------------------------------------------------------
+  # RE - Reserved Expansion Field
+  # ----------------------------------------------------------
+  RE:
+    type: explicit
