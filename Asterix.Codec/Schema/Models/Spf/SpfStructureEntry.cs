@@ -12,6 +12,8 @@ namespace Asterix.Codec.Schema.Models;
 ///   <item><see cref="SpfRepetitiveEntry"/> — repeated group, count resolved from context</item>
 ///   <item><see cref="DynamicPresenceEntry"/> — reads one flag per named field into the presence map</item>
 ///   <item><see cref="OptionalEntry"/> — conditionally decoded based on a presence flag</item>
+///   <item><see cref="OptionalGroupEntry"/> — conditionally decoded multi-field group</item>
+///   <item><see cref="OptionalRepetitiveEntry"/> — conditionally decoded repetitive group with implicit uint8 count</item>
 /// </list>
 /// </summary>
 public abstract class SpfStructureEntry

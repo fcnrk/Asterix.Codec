@@ -20,6 +20,14 @@ namespace Asterix.Codec.Model;
 ///         <description><see cref="DecodedField"/> — decoded field value</description></item>
 ///   <item><term>OptionalEntry (absent)</term>
 ///         <description><c>null</c></description></item>
+///   <item><term>OptionalGroupEntry (present)</term>
+///         <description><see cref="SpfGroupValue"/> — decoded group of fields</description></item>
+///   <item><term>OptionalGroupEntry (absent)</term>
+///         <description><c>null</c></description></item>
+///   <item><term>OptionalRepetitiveEntry (present)</term>
+///         <description><see cref="SpfOptionalRepetitiveValue"/> — count + elements</description></item>
+///   <item><term>OptionalRepetitiveEntry (absent)</term>
+///         <description><c>null</c></description></item>
 /// </list>
 /// </summary>
 public sealed class SpfDecodedItem : DecodedItem
@@ -51,4 +59,16 @@ public sealed class SpfDecodedItem : DecodedItem
     /// </summary>
     public DecodedField? GetOptional(string name) =>
         Fields.TryGetValue(name, out var v) ? v as DecodedField : null;
+
+    /// <summary>
+    /// Returns the optional group for <paramref name="name"/>, or null if absent.
+    /// </summary>
+    public SpfGroupValue? GetOptionalGroup(string name) =>
+        Fields.TryGetValue(name, out var v) ? v as SpfGroupValue : null;
+
+    /// <summary>
+    /// Returns the optional repetitive value for <paramref name="name"/>, or null if absent.
+    /// </summary>
+    public SpfOptionalRepetitiveValue? GetOptionalRepetitive(string name) =>
+        Fields.TryGetValue(name, out var v) ? v as SpfOptionalRepetitiveValue : null;
 }
