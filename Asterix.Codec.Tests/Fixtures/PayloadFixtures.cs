@@ -212,4 +212,42 @@ internal static class PayloadFixtures
 
     // ── Negative: LEN > data.Length ──────────────────────────────────────────
     public static readonly byte[] LenExceedsData = [0x3E, 0x00, 0xFF, 0xA0];
+
+    // ── SPF_EXTENDED — all present, rep1 has 2 elements ──────────────────────
+    //
+    // length (uint16):       0x00,0x0C = 12 bytes total
+    // presence.grp1 (uint8): 0x01 = present
+    // presence.rep1 (uint8): 0x01 = present
+    // grp1.ga (uint8):       0xAA = 170
+    // grp1.gb (uint16):      0xBB,0xCC = 48076
+    // rep1.count (uint8):    0x02 = 2 elements
+    // rep1[0]: ra=0x11(17), rb=0x22(34)
+    // rep1[1]: ra=0x33(51), rb=0x44(68)
+    //
+    // Byte count: 2+2+3+1+4 = 12 ✓
+    public static readonly byte[] SpfExtendedPresent =
+    [
+        0x00, 0x0C,         // length = 12
+        0x01,               // presence.grp1 = present
+        0x01,               // presence.rep1 = present
+        0xAA,               // grp1.ga = 170
+        0xBB, 0xCC,         // grp1.gb = 48076
+        0x02,               // rep1.count = 2
+        0x11, 0x22,         // rep1[0]: ra=17, rb=34
+        0x33, 0x44,         // rep1[1]: ra=51, rb=68
+    ];
+
+    // ── SPF_EXTENDED — all absent ─────────────────────────────────────────────
+    //
+    // length (uint16):       0x00,0x04 = 4 bytes total
+    // presence.grp1 (uint8): 0x00 = absent
+    // presence.rep1 (uint8): 0x00 = absent
+    //
+    // Byte count: 2+2 = 4 ✓
+    public static readonly byte[] SpfExtendedAbsent =
+    [
+        0x00, 0x04,         // length = 4
+        0x00,               // presence.grp1 = absent
+        0x00,               // presence.rep1 = absent
+    ];
 }

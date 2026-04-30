@@ -170,4 +170,25 @@ internal static class SchemaFixtures
                 field: new FieldDefinition("f8", FieldType.String, bits: 32, bitOffset: 0,
                     encoding: StringEncoding.Ascii, stringLength: 4)),
         ]);
+
+    // ── SPF_EXTENDED ──────────────────────────────────────────────────────────
+
+    public static SpfFieldSetDefinition SpfExtended() => new(
+        name: "SPF_EXTENDED",
+        description: "Test SPF with optional_group and optional_repetitive entry types",
+        structure:
+        [
+            new ScalarEntry("length", FieldType.UInt, bits: 16),
+            new DynamicPresenceEntry("presence", bitWidth: 8, fields: ["grp1", "rep1"]),
+            new OptionalGroupEntry("grp1", presenceGroup: "presence", presenceField: "grp1",
+                fields: [
+                    new FieldDefinition("ga", FieldType.UInt, 8,  bitOffset: 0),
+                    new FieldDefinition("gb", FieldType.UInt, 16, bitOffset: 8),
+                ]),
+            new OptionalRepetitiveEntry("rep1", presenceGroup: "presence", presenceField: "rep1",
+                element: new SpfElementDefinition([
+                    new FieldDefinition("ra", FieldType.UInt, 8, bitOffset: 0),
+                    new FieldDefinition("rb", FieldType.UInt, 8, bitOffset: 8),
+                ])),
+        ]);
 }
