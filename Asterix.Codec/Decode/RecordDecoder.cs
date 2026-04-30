@@ -71,6 +71,9 @@ internal static class RecordDecoder
                 continue;
             }
 
+            if (itemDef is SpareItemDefinition)
+                continue;
+
             items[itemId] = ItemDecoderDispatcher.Decode(ref reader, itemDef, itemId, mode);
         }
 
@@ -172,6 +175,9 @@ internal static class RecordDecoder
                         $"Item '{itemId}' present in FSPEC but not defined in CAT{schema.Category:D3} schema");
                 continue;
             }
+
+            if (itemDef is SpareItemDefinition)
+                continue;
 
             items[itemId] = ItemDecoderDispatcher.Decode(ref reader, itemDef, itemId, mode);
         }
