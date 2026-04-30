@@ -103,31 +103,32 @@ public class SchemaLoaderTests
         var schema = YamlSchemaLoader.LoadCategory(SamplesPath("cat062.yml"));
 
         var i245 = (FixedItemDefinition)schema.Items["I062_245"];
-        var callsign = i245.Fields[0];
+        var callsign = i245.Fields[2]; // sti(0), spare(1), callsign(2)
         callsign.Type.Should().Be(FieldType.String);
         callsign.Encoding.Should().Be(StringEncoding.Ia5);
         callsign.StringLength.Should().Be(6);
     }
 
     [Fact]
-    public void LoadCategory_Cat062Yml_I062_210_IsCompound()
+    public void LoadCategory_Cat062Yml_I062_210_IsFixed()
     {
         var schema = YamlSchemaLoader.LoadCategory(SamplesPath("cat062.yml"));
 
-        var i210 = schema.Items["I062_210"].Should().BeOfType<CompoundItemDefinition>().Subject;
-        i210.Fspec.Should().HaveCount(6);
-        i210.Subitems.Should().ContainKey("qx");
-        i210.Subitems.Should().ContainKey("qvy");
+        var i210 = schema.Items["I062_210"].Should().BeOfType<FixedItemDefinition>().Subject;
+        i210.Length.Should().Be(2);
+        i210.Fields.Should().ContainSingle(f => f.Name == "ax");
+        i210.Fields.Should().ContainSingle(f => f.Name == "ay");
     }
 
     [Fact]
-    public void LoadCategory_Cat062Yml_I062_290_IsRepetitive()
+    public void LoadCategory_Cat062Yml_I062_290_IsCompound()
     {
         var schema = YamlSchemaLoader.LoadCategory(SamplesPath("cat062.yml"));
 
-        var i290 = schema.Items["I062_290"].Should().BeOfType<RepetitiveItemDefinition>().Subject;
-        i290.CountField.Bits.Should().Be(8);
-        i290.Element.Should().BeOfType<FixedItemDefinition>();
+        var i290 = schema.Items["I062_290"].Should().BeOfType<CompoundItemDefinition>().Subject;
+        i290.Fspec.Should().HaveCount(10);
+        i290.Subitems.Should().ContainKey("trk");
+        i290.Subitems.Should().ContainKey("psr");
     }
 
     [Fact]
