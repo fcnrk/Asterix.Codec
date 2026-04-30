@@ -1,49 +1,306 @@
-﻿schema_version: 1
+schema_version: 1
 
 category: 253
-name: "ASTERIX Category 253 — Custom"
+name: "ASTERIX Category 253 — Remote Monitoring and Control"
 
+# Different CAT253 applications are identified by I253/030 SAI.
+# Within an application, message type is identified by I253/040 MIT (bits 6/1).
 discriminator:
-  item: I253_010
-  field: message_type
+  item: I253_040
+  field: mit
+
+# ── Messages ────────────────────────────────────────────────────────────────
 
 messages:
-  - id: msg001
-    name: "Message Type 001 — Status"
-    discriminator: "1"
-    uap:
-      - I253_010
-      - I253_001
 
-  - id: msg100
-    name: "Message Type 100 — Structured-Explicit Application Data"
-    discriminator: "100"
+  # MIT=10: Delta Status Transfer Message — used for BağlantıDurum
+  - id: baglantidurum
+    name: "BağlantıDurum — Delta Status Transfer Message"
+    discriminator: "10"
     uap:
-      - I253_010
-      - I253_100
+      - I253_010   # FRN 1  — Data Source Identifier            (C)
+      - I253_015   # FRN 2  — Local Data Source Identifier      (C)
+      - I253_025   # FRN 3  — Data Destination & Local ID       (C)
+      - I253_030   # FRN 4  — Source Application Identifier     (C)
+      - I253_040   # FRN 5  — Message Type Identifier           (C)
+      - I253_050   # FRN 6  — Message Sequence ID               (O)
+      - I253_070   # FRN 7  — Time of Day                       (C)
+      # ── FX (FSPEC byte 1 ends here) ───────────────────────────────────────
+      - I253_035   # FRN 8  — Data Origin Identifier            (O)
+      - I253_060   # FRN 9  — Blocking Information              (O)
+      - I253_080   # FRN 10 — Application Data Structures       (C)
+      - I253_090   # FRN 11 — Application Data                  (O)
+      - I253_100   # FRN 12 — Transparent Application Data 1    (O)
+      - SP         # FRN 13 — Reserved for SP Indicator
+      - RE         # FRN 14 — Reserved for RE Indicator
+      # ── FX (FSPEC byte 2 ends here) ───────────────────────────────────────
+
+  # TODO: Add RadarKonum message (MIT value TBD — awaiting requirement images)
+
+# ── Item Definitions ────────────────────────────────────────────────────────
 
 items:
-  # ── Discriminator (shared across all messages) ──────────────────────────
-  I253_010:
-    type: fixed
-    length: 1
-    fields:
-      - name: message_type
-        type: uint
-        bits: 8
 
-  # ── Type 001 ─────────────────────────────────────────────────────────────
-  I253_001:
+  # ----------------------------------------------------------
+  # I253/010 — Data Source Identifier
+  # 2 octets fixed: SAC(8) + SIC(8)
+  # Identifies the system from which the data are received.
+  # ----------------------------------------------------------
+  I253_010:
     type: fixed
     length: 2
     fields:
-      - name: status
+      - name: sac
+        type: uint
+        bits: 8
+      - name: sic
+        type: uint
+        bits: 8
+
+  # ----------------------------------------------------------
+  # I253/015 — Local Data Source Identifier
+  # 1 octet fixed: local_id(8)
+  # Local identifier per SAC/SIC.
+  # ----------------------------------------------------------
+  I253_015:
+    type: fixed
+    length: 1
+    fields:
+      - name: local_id
+        type: uint
+        bits: 8
+
+  # ----------------------------------------------------------
+  # I253/020 — Data Destination Identifier
+  # Repetitive: REP(8) + n × [SAC(8) + SIC(8)]
+  # Used in ERCAMS / General Purpose Transparent UAPs.
+  # ----------------------------------------------------------
+  I253_020:
+    type: repetitive
+    count_field:
+      bits: 8
+    element:
+      type: fixed
+      length: 2
+      fields:
+        - name: sac
+          type: uint
+          bits: 8
+        - name: sic
+          type: uint
+          bits: 8
+
+  # ----------------------------------------------------------
+  # I253/025 — Data Destination and Local Identifier
+  # Repetitive: REP(8) + n × [SAC(8) + SIC(8) + local_id(8)]
+  # BağlantıDurum constraint: REP=1 (exactly one destination).
+  # ----------------------------------------------------------
+  I253_025:
+    type: repetitive
+    count_field:
+      bits: 8
+    element:
+      type: fixed
+      length: 3
+      fields:
+        - name: sac
+          type: uint
+          bits: 8
+        - name: sic
+          type: uint
+          bits: 8
+        - name: local_id
+          type: uint
+          bits: 8
+
+  # ----------------------------------------------------------
+  # I253/030 — Source Application Identifier
+  # 2 octets fixed: sai(16)
+  # Values 56–65 reserved for Aselsan A.S.
+  # ----------------------------------------------------------
+  I253_030:
+    type: fixed
+    length: 2
+    fields:
+      - name: sai
         type: uint
         bits: 16
 
-  # ── Type 100: structured-explicit container ─────────────────────────────
-  # Inner structure is defined in structured_explicit_cat253.yml.
-  # At Build() time, this explicit placeholder is substituted with the
-  # StructuredExplicitItemDefinition loaded from that file.
+  # ----------------------------------------------------------
+  # I253/035 — Data Origin Identifier
+  # 3 octets fixed: oac(8) + oic(8) + local_id(8)
+  # ----------------------------------------------------------
+  I253_035:
+    type: fixed
+    length: 3
+    fields:
+      - name: oac
+        type: uint
+        bits: 8
+      - name: oic
+        type: uint
+        bits: 8
+      - name: local_id
+        type: uint
+        bits: 8
+
+  # ----------------------------------------------------------
+  # I253/040 — Message Type Identifier
+  # 1 octet fixed: pi(1) + d(1) + mit(6)
+  #   pi : 0=low priority, 1=high priority
+  #   d  : 0=no ack required, 1=explicit ack required
+  #   mit: 10=Delta Status Transfer (BağlantıDurum)
+  # ----------------------------------------------------------
+  I253_040:
+    type: fixed
+    length: 1
+    fields:
+      - name: pi
+        type: uint
+        bits: 1
+      - name: d
+        type: uint
+        bits: 1
+      - name: mit
+        type: uint
+        bits: 6
+
+  # ----------------------------------------------------------
+  # I253/050 — Message Sequence Identifier
+  # Repetitive: REP(8) + n × msid(16)
+  # ----------------------------------------------------------
+  I253_050:
+    type: repetitive
+    count_field:
+      bits: 8
+    element:
+      type: fixed
+      length: 2
+      fields:
+        - name: msid
+          type: uint
+          bits: 16
+
+  # ----------------------------------------------------------
+  # I253/060 — Blocking Information
+  # 2 octets fixed: tnb(8) + bn(8)
+  #   tnb: total number of blocks
+  #   bn : block number of current block
+  # ----------------------------------------------------------
+  I253_060:
+    type: fixed
+    length: 2
+    fields:
+      - name: tnb
+        type: uint
+        bits: 8
+      - name: bn
+        type: uint
+        bits: 8
+
+  # ----------------------------------------------------------
+  # I253/070 — Time of Day
+  # 3 octets fixed: time(24), LSB = 1/128 s (UTC since midnight)
+  # BağlantıDurum constraint: must be within the last 5 seconds.
+  # ----------------------------------------------------------
+  I253_070:
+    type: fixed
+    length: 3
+    fields:
+      - name: time
+        type: uint
+        bits: 24
+        scale: "1/128"
+        unit: "s"
+
+  # ----------------------------------------------------------
+  # I253/080 — Application Data Structure
+  # Variable 4+ octets: start_index(16) + count(8) + status(7) + FX(1)
+  # FX=1 adds further 1-octet status extension segments.
+  #
+  # NOTE: Modelled as fixed 4 bytes (base structure only).
+  #       FX-extended segments are not modelled here.
+  #
+  # BağlantıDurum constraints:
+  #   start_index = 1102 (Big-Endian)
+  #   count       = 1
+  #   status      = any
+  # ----------------------------------------------------------
+  I253_080:
+    type: fixed
+    length: 4
+    fields:
+      - name: start_index
+        type: uint
+        bits: 16
+      - name: count
+        type: uint
+        bits: 8
+      - name: status
+        type: uint
+        bits: 7
+      - name: fx
+        type: uint
+        bits: 1
+
+  # ----------------------------------------------------------
+  # I253/090 — Application Data Item
+  # Repetitive: REP(8) + n × 16-byte (128-bit) blocks
+  # Structure of each block is defined by the preceding I253/080.
+  # ----------------------------------------------------------
+  I253_090:
+    type: repetitive
+    count_field:
+      bits: 8
+    element:
+      type: fixed
+      length: 16
+      fields:
+        - name: data
+          type: uint
+          bits: 128
+
+  # ----------------------------------------------------------
+  # I253/100 — Transparent Application Data 1
+  # Explicit length: LEN(8) + TAD[LEN-1 bytes]
+  # Inner structure for BağlantıDurum defined in:
+  #   structured_explicit_baglantidurum.yml
+  # ----------------------------------------------------------
   I253_100:
     type: explicit
+
+  # ----------------------------------------------------------
+  # I253/110 — Transparent Application Data 2
+  # Explicit length: LEN(8) + TAD[LEN-1 bytes]
+  # ----------------------------------------------------------
+  I253_110:
+    type: explicit
+
+  # ----------------------------------------------------------
+  # I253/120 — Extended Transparent Application Data — Total Length
+  # 2 octets fixed: tltad(16), max 65280 octets
+  # ----------------------------------------------------------
+  I253_120:
+    type: fixed
+    length: 2
+    fields:
+      - name: tltad
+        type: uint
+        bits: 16
+
+  # ----------------------------------------------------------
+  # I253/130 — Extended Transparent Application Data
+  # Repetitive: REP(8) + n × 256-byte ETAD blocks
+  # Padding bytes (zero) fill each block to 256 octets.
+  # ----------------------------------------------------------
+  I253_130:
+    type: repetitive
+    count_field:
+      bits: 8
+    element:
+      type: fixed
+      length: 256
+      fields:
+        - name: etad
+          type: uint
+          bits: 2048
