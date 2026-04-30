@@ -150,4 +150,136 @@ public class SchemaValidatorTests
         Assert.Throws<SchemaValidationException>(() =>
             SchemaValidator.Validate(schema, "test"));
     }
+
+    // ── optional_group validation ─────────────────────────────────────────────
+
+    [Fact]
+    public void Validate_OptionalGroup_MissingPresenceGroup_Throws()
+    {
+        var def = new SpfFieldSetDefinition("TEST", "",
+        [
+            new ScalarEntry("length", FieldType.UInt, 16),
+            // No DynamicPresenceEntry named "presence"
+            new OptionalGroupEntry("grp1", "presence", "grp1",
+            [
+                new FieldDefinition("ga", FieldType.UInt, 8, 0),
+            ]),
+        ]);
+        var schema = new SpfFieldSetSchema(1, new Dictionary<string, SpfFieldSetDefinition>
+            { ["TEST"] = def });
+
+        Action act = () => SchemaValidator.Validate(schema, "test");
+
+        act.Should().Throw<SchemaValidationException>()
+            .WithMessage("*presence group 'presence'*");
+    }
+
+    [Fact]
+    public void Validate_OptionalGroup_InvalidPresenceField_Throws()
+    {
+        var def = new SpfFieldSetDefinition("TEST", "",
+        [
+            new ScalarEntry("length", FieldType.UInt, 16),
+            new DynamicPresenceEntry("presence", 8, ["other"]),
+            new OptionalGroupEntry("grp1", "presence", "grp1",   // "grp1" not in presence.fields
+            [
+                new FieldDefinition("ga", FieldType.UInt, 8, 0),
+            ]),
+        ]);
+        var schema = new SpfFieldSetSchema(1, new Dictionary<string, SpfFieldSetDefinition>
+            { ["TEST"] = def });
+
+        Action act = () => SchemaValidator.Validate(schema, "test");
+
+        act.Should().Throw<SchemaValidationException>()
+            .WithMessage("*presence field 'grp1'*");
+    }
+
+    [Fact]
+    public void Validate_OptionalGroup_EmptyFields_Throws()
+    {
+        var def = new SpfFieldSetDefinition("TEST", "",
+        [
+            new ScalarEntry("length", FieldType.UInt, 16),
+            new DynamicPresenceEntry("presence", 8, ["grp1"]),
+            new OptionalGroupEntry("grp1", "presence", "grp1", []),
+        ]);
+        var schema = new SpfFieldSetSchema(1, new Dictionary<string, SpfFieldSetDefinition>
+            { ["TEST"] = def });
+
+        Action act = () => SchemaValidator.Validate(schema, "test");
+
+        act.Should().Throw<SchemaValidationException>()
+            .WithMessage("*empty*fields*");
+    }
+
+    // ── optional_repetitive validation ────────────────────────────────────────
+
+    [Fact]
+    public void Validate_OptionalRepetitive_MissingPresenceGroup_Throws()
+    {
+        var def = new SpfFieldSetDefinition("TEST", "",
+        [
+            new ScalarEntry("length", FieldType.UInt, 16),
+            new OptionalRepetitiveEntry("rep1", "presence", "rep1",
+                new SpfElementDefinition([new FieldDefinition("ra", FieldType.UInt, 8, 0)])),
+        ]);
+        var schema = new SpfFieldSetSchema(1, new Dictionary<string, SpfFieldSetDefinition>
+            { ["TEST"] = def });
+
+        Action act = () => SchemaValidator.Validate(schema, "test");
+
+        act.Should().Throw<SchemaValidationException>()
+            .WithMessage("*presence group 'presence'*");
+    }
+
+    [Fact]
+    public void Validate_OptionalRepetitive_InvalidPresenceField_Throws()
+    {
+        var def = new SpfFieldSetDefinition("TEST", "",
+        [
+            new ScalarEntry("length", FieldType.UInt, 16),
+            new DynamicPresenceEntry("presence", 8, ["other"]),
+            new OptionalRepetitiveEntry("rep1", "presence", "rep1",
+                new SpfElementDefinition([new FieldDefinition("ra", FieldType.UInt, 8, 0)])),
+        ]);
+        var schema = new SpfFieldSetSchema(1, new Dictionary<string, SpfFieldSetDefinition>
+            { ["TEST"] = def });
+
+        Action act = () => SchemaValidator.Validate(schema, "test");
+
+        act.Should().Throw<SchemaValidationException>()
+            .WithMessage("*presence field 'rep1'*");
+    }
+
+    [Fact]
+    public void Validate_OptionalRepetitive_EmptyElement_Throws()
+    {
+        var def = new SpfFieldSetDefinition("TEST", "",
+        [
+            new ScalarEntry("length", FieldType.UInt, 16),
+            new DynamicPresenceEntry("presence", 8, ["rep1"]),
+            new OptionalRepetitiveEntry("rep1", "presence", "rep1",
+                new SpfElementDefinition([])),
+        ]);
+        var schema = new SpfFieldSetSchema(1, new Dictionary<string, SpfFieldSetDefinition>
+            { ["TEST"] = def });
+
+        Action act = () => SchemaValidator.Validate(schema, "test");
+
+        act.Should().Throw<SchemaValidationException>()
+            .WithMessage("*empty element*");
+    }
+
+    [Fact]
+    public void Validate_ValidSpfExtended_DoesNotThrow()
+    {
+        var def = SchemaFixtures.SpfExtended();
+        var schema = new SpfFieldSetSchema(1, new Dictionary<string, SpfFieldSetDefinition>
+            { [def.Name] = def });
+
+        Action act = () => SchemaValidator.Validate(schema, "test");
+
+        act.Should().NotThrow();
+    }
 }

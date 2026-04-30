@@ -243,6 +243,34 @@ internal static class SchemaValidator
                         throw new SchemaValidationException(path, null, entryPath,
                             $"OptionalEntry '{optional.Name}' has invalid bits={optional.Field.Bits}. Must be > 0.");
                     break;
+
+                case OptionalGroupEntry optGroup:
+                    if (!seenPresenceGroups.TryGetValue(optGroup.PresenceGroup, out var pgForGroup))
+                        throw new SchemaValidationException(path, null, entryPath,
+                            $"OptionalGroupEntry '{optGroup.Name}' references presence group '{optGroup.PresenceGroup}' " +
+                            $"which is not a DynamicPresenceEntry defined before this entry.");
+                    if (!pgForGroup.Fields.Contains(optGroup.PresenceField))
+                        throw new SchemaValidationException(path, null, entryPath,
+                            $"OptionalGroupEntry '{optGroup.Name}' references presence field '{optGroup.PresenceField}' " +
+                            $"which is not listed in DynamicPresenceEntry '{optGroup.PresenceGroup}'.");
+                    if (optGroup.Fields.Count == 0)
+                        throw new SchemaValidationException(path, null, entryPath,
+                            $"OptionalGroupEntry '{optGroup.Name}' has empty fields list.");
+                    break;
+
+                case OptionalRepetitiveEntry optRep:
+                    if (!seenPresenceGroups.TryGetValue(optRep.PresenceGroup, out var pgForRep))
+                        throw new SchemaValidationException(path, null, entryPath,
+                            $"OptionalRepetitiveEntry '{optRep.Name}' references presence group '{optRep.PresenceGroup}' " +
+                            $"which is not a DynamicPresenceEntry defined before this entry.");
+                    if (!pgForRep.Fields.Contains(optRep.PresenceField))
+                        throw new SchemaValidationException(path, null, entryPath,
+                            $"OptionalRepetitiveEntry '{optRep.Name}' references presence field '{optRep.PresenceField}' " +
+                            $"which is not listed in DynamicPresenceEntry '{optRep.PresenceGroup}'.");
+                    if (optRep.Element.Fields.Count == 0)
+                        throw new SchemaValidationException(path, null, entryPath,
+                            $"OptionalRepetitiveEntry '{optRep.Name}' has an empty element group.");
+                    break;
             }
         }
     }
