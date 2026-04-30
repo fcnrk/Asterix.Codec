@@ -31,7 +31,7 @@ public class SchemaLoaderTests
     {
         var schema = YamlSchemaLoader.LoadCategory(SamplesPath("cat062.yml"));
 
-        // 30 items: 28 data items + RE + SP + SPARE sentinel
+        // 30 items: 27 data items + RE + SP + SPARE sentinel
         schema.Items.Should().HaveCount(30);
     }
 
