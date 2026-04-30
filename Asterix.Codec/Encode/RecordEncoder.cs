@@ -22,7 +22,10 @@ internal static class RecordEncoder
         AsterixCategorySchema schema,
         MessageDefinition message)
     {
-        var presentIds = new HashSet<string>(record.Items.Keys, StringComparer.Ordinal);
+        var presentIds = new HashSet<string>(
+            record.Items.Keys.Where(id =>
+                !schema.Items.TryGetValue(id, out var def) || def is not SpareItemDefinition),
+            StringComparer.Ordinal);
 
         FspecBuilder.WriteFspec(message.Uap, presentIds, writer);
 
@@ -38,6 +41,9 @@ internal static class RecordEncoder
                 throw new EncodeException(itemId,
                     $"Item '{itemId}' present in record but not defined in " +
                     $"CAT{schema.Category:D3} schema");
+
+            if (itemDef is SpareItemDefinition)
+                continue;
 
             ItemEncoderDispatcher.Encode(writer, item, itemDef, itemId);
         }
