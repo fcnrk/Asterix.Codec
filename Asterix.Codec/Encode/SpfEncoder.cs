@@ -136,6 +136,18 @@ public static class SpfEncoder
                 if (field is not null)
                     FieldEncoder.Encode(writer, field, optional.Field, $"{definitionName}.{optional.Name}");
                 break;
+            case OptionalGroupEntry optGroup:
+                SpfGroupValue? grpValue = item.GetOptionalGroup(optGroup.Name);
+                if (grpValue is not null)
+                    EncodeGroupElement(writer, grpValue, optGroup.Fields,
+                        $"{definitionName}.{optGroup.Name}");
+                break;
+            case OptionalRepetitiveEntry optRep:
+                SpfOptionalRepetitiveValue? optRepValue = item.GetOptionalRepetitive(optRep.Name);
+                if (optRepValue is not null)
+                    EncodeOptionalRepetitive(writer, optRepValue, optRep,
+                        $"{definitionName}.{optRep.Name}");
+                break;
             default:
                 throw new EncodeException(definitionName,
                     $"Unknown SPF structure entry type '{entry.GetType().Name}'");
@@ -149,28 +161,7 @@ public static class SpfEncoder
         string path)
     {
         for (int i = 0; i < elements.Count; i++)
-        {
-            SpfGroupValue group = elements[i];
-            string groupPath = $"{path}[{i}]";
-            int currentBit = 0;
-
-            for (int j = 0; j < entry.Element.Fields.Count; j++)
-            {
-                FieldDefinition fieldDef = entry.Element.Fields[j];
-                string fieldPath = $"{groupPath}.{fieldDef.Name}";
-
-                if (fieldDef.BitOffset > currentBit)
-                    writer.WriteBits(0UL, fieldDef.BitOffset - currentBit);
-
-                DecodedField? field = group.GetField(fieldDef.Name);
-                if (field is null)
-                    throw new EncodeException(fieldPath,
-                        $"Group element missing field '{fieldDef.Name}'");
-
-                FieldEncoder.Encode(writer, field, fieldDef, fieldPath);
-                currentBit = fieldDef.BitOffset + fieldDef.Bits;
-            }
-        }
+            EncodeGroupElement(writer, elements[i], entry.Element.Fields, $"{path}[{i}]");
     }
 
     private static void EncodePresence(
@@ -189,10 +180,55 @@ public static class SpfEncoder
             if (stored is not null && stored.TryGetValue(fieldName, out ulong storedFlag))
                 flagValue = storedFlag;
             else
-                flagValue = item.GetOptional(fieldName) is not null ? 1UL : 0UL;
+                flagValue = item.GetOptional(fieldName) is not null
+                         || item.GetOptionalGroup(fieldName) is not null
+                         || item.GetOptionalRepetitive(fieldName) is not null
+                            ? 1UL : 0UL;
 
             writer.WriteBits(flagValue, entry.BitWidth);
         }
+    }
+
+    private static void EncodeGroupElement(
+        BitWriter writer,
+        SpfGroupValue group,
+        IReadOnlyList<FieldDefinition> fields,
+        string path)
+    {
+        int currentBit = 0;
+
+        for (int i = 0; i < fields.Count; i++)
+        {
+            FieldDefinition fieldDef = fields[i];
+            string fieldPath = $"{path}.{fieldDef.Name}";
+
+            if (fieldDef.BitOffset > currentBit)
+                writer.WriteBits(0UL, fieldDef.BitOffset - currentBit);
+
+            DecodedField? field = group.GetField(fieldDef.Name);
+            if (field is null)
+                throw new EncodeException(fieldPath,
+                    $"Group element missing field '{fieldDef.Name}'");
+
+            FieldEncoder.Encode(writer, field, fieldDef, fieldPath);
+            currentBit = fieldDef.BitOffset + fieldDef.Bits;
+        }
+    }
+
+    private static void EncodeOptionalRepetitive(
+        BitWriter writer,
+        SpfOptionalRepetitiveValue value,
+        OptionalRepetitiveEntry entry,
+        string path)
+    {
+        if (value.Count != value.Elements.Count)
+            throw new EncodeException(path,
+                $"SpfOptionalRepetitiveValue '{path}': Count={value.Count} does not match Elements.Count={value.Elements.Count}");
+
+        writer.WriteBits(value.Count, 8); // implicit uint8 count
+
+        for (int i = 0; i < value.Elements.Count; i++)
+            EncodeGroupElement(writer, value.Elements[i], entry.Element.Fields, $"{path}[{i}]");
     }
 
     #endregion
