@@ -261,6 +261,13 @@ public static class SpfDecoder
         return FieldDecoder.Decode(ref reader, entry.Field, entry.Name, baseByteOffset: 0);
     }
 
+    /// <summary>
+    /// Decodes a conditionally present group of fields.
+    ///
+    /// <para>
+    /// Returns <c>null</c> when absent; stores a <see cref="SpfGroupValue"/> when present.
+    /// </para>
+    /// </summary>
     private static SpfGroupValue? DecodeOptionalGroup(
         ref BitReader reader,
         OptionalGroupEntry entry,
@@ -269,10 +276,17 @@ public static class SpfDecoder
         if (!context.IsPresent(entry.PresenceGroup, entry.PresenceField))
             return null;
 
-        return DecodeGroupElement(ref reader,
-            new SpfElementDefinition(entry.Fields), entry.Name);
+        return DecodeGroupElement(ref reader, entry.Element, entry.Name);
     }
 
+    /// <summary>
+    /// Decodes a conditionally present repetitive group.
+    ///
+    /// <para>
+    /// Returns <c>null</c> when absent; reads an implicit <see cref="uint8"/> count and decodes
+    /// that many group elements.
+    /// </para>
+    /// </summary>
     private static SpfOptionalRepetitiveValue? DecodeOptionalRepetitive(
         ref BitReader reader,
         OptionalRepetitiveEntry entry,

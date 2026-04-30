@@ -42,11 +42,17 @@ public sealed class OptionalGroupEntry : SpfStructureEntry
     /// </summary>
     public IReadOnlyList<FieldDefinition> Fields { get; }
 
+    /// <summary>
+    /// Pre-constructed SPF element definition from <see cref="Fields"/>, avoiding per-call allocation.
+    /// </summary>
+    public SpfElementDefinition Element { get; }
+
     public OptionalGroupEntry(string name, string presenceGroup, string presenceField, IReadOnlyList<FieldDefinition> fields)
         : base(name)
     {
         PresenceGroup = presenceGroup;
         PresenceField = presenceField;
         Fields = fields;
+        Element = new SpfElementDefinition(fields);
     }
 }
