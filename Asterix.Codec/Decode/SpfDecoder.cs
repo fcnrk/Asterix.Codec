@@ -92,6 +92,12 @@ public static class SpfDecoder
                     // null stored in resultFields when the field is absent.
                     resultFields[optional.Name] = DecodeOptional(ref reader, optional, context);
                     break;
+                case OptionalGroupEntry optGroup:
+                    resultFields[optGroup.Name] = DecodeOptionalGroup(ref reader, optGroup, context);
+                    break;
+                case OptionalRepetitiveEntry optRep:
+                    resultFields[optRep.Name] = DecodeOptionalRepetitive(ref reader, optRep, context, mode);
+                    break;
                 default:
                     throw new DecodeException(reader.ByteOffset, entry.Name,
                         $"Unknown SPF structure entry type '{entry.GetType().Name}'");
@@ -253,6 +259,45 @@ public static class SpfDecoder
             return null;
 
         return FieldDecoder.Decode(ref reader, entry.Field, entry.Name, baseByteOffset: 0);
+    }
+
+    private static SpfGroupValue? DecodeOptionalGroup(
+        ref BitReader reader,
+        OptionalGroupEntry entry,
+        DecodeContext context)
+    {
+        if (!context.IsPresent(entry.PresenceGroup, entry.PresenceField))
+            return null;
+
+        return DecodeGroupElement(ref reader,
+            new SpfElementDefinition(entry.Fields), entry.Name);
+    }
+
+    private static SpfOptionalRepetitiveValue? DecodeOptionalRepetitive(
+        ref BitReader reader,
+        OptionalRepetitiveEntry entry,
+        DecodeContext context,
+        DecodeMode mode)
+    {
+        if (!context.IsPresent(entry.PresenceGroup, entry.PresenceField))
+            return null;
+
+        byte count;
+        try
+        {
+            count = (byte)reader.ReadBits(8);
+        }
+        catch (InvalidOperationException ex)
+        {
+            throw new DecodeException(reader.ByteOffset, entry.Name,
+                $"Failed to read implicit count for optional_repetitive '{entry.Name}': {ex.Message}", ex);
+        }
+
+        var elements = new SpfGroupValue[count];
+        for (int i = 0; i < count; i++)
+            elements[i] = DecodeGroupElement(ref reader, entry.Element, $"{entry.Name}[{i}]");
+
+        return new SpfOptionalRepetitiveValue(count, elements);
     }
     #endregion
 
