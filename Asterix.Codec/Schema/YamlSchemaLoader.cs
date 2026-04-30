@@ -414,6 +414,8 @@ public static class YamlSchemaLoader
                     $"SPF dynamic_presence entry '{dto.Name}' missing 'fields'.")),
 
             "optional" => MapOptionalEntry(dto, hint),
+            "optional_group" => MapOptionalGroupEntry(dto, hint),
+            "optional_repetitive" => MapOptionalRepetitiveEntry(dto, hint),
 
             _ => throw new SchemaLoadException(hint,
                 $"Unknown SPF structure entry type '{dto.Type}'.")
@@ -437,6 +439,48 @@ public static class YamlSchemaLoader
 
         var field = MapSpfField(dto.Name, fieldDto, hint);
         return new OptionalEntry(dto.Name, presenceGroup, presenceField, field);
+    }
+
+    private static OptionalGroupEntry MapOptionalGroupEntry(SpfStructureEntryDto dto, string hint)
+    {
+        string presentIf = dto.PresentIf ?? throw new SchemaLoadException(hint,
+            $"SPF optional_group entry '{dto.Name}' missing 'present_if'.");
+        var groupFields = dto.GroupFields ?? throw new SchemaLoadException(hint,
+            $"SPF optional_group entry '{dto.Name}' missing 'group_fields'.");
+        if (groupFields.Count == 0)
+            throw new SchemaLoadException(hint,
+                $"SPF optional_group entry '{dto.Name}' has empty 'group_fields'.");
+
+        int dotIdx = presentIf.IndexOf('.');
+        if (dotIdx < 0)
+            throw new SchemaLoadException(hint,
+                $"SPF optional_group entry '{dto.Name}' present_if='{presentIf}' must be in 'group.field' format.");
+
+        string presenceGroup = presentIf.Substring(0, dotIdx);
+        string presenceField = presentIf.Substring(dotIdx + 1);
+        var fields = MapFields(groupFields, hint);
+        return new OptionalGroupEntry(dto.Name, presenceGroup, presenceField, fields);
+    }
+
+    private static OptionalRepetitiveEntry MapOptionalRepetitiveEntry(SpfStructureEntryDto dto, string hint)
+    {
+        string presentIf = dto.PresentIf ?? throw new SchemaLoadException(hint,
+            $"SPF optional_repetitive entry '{dto.Name}' missing 'present_if'.");
+        var elementDto = dto.Element ?? throw new SchemaLoadException(hint,
+            $"SPF optional_repetitive entry '{dto.Name}' missing 'element'.");
+        if (elementDto.Fields.Count == 0)
+            throw new SchemaLoadException(hint,
+                $"SPF optional_repetitive entry '{dto.Name}' has empty element group.");
+
+        int dotIdx = presentIf.IndexOf('.');
+        if (dotIdx < 0)
+            throw new SchemaLoadException(hint,
+                $"SPF optional_repetitive entry '{dto.Name}' present_if='{presentIf}' must be in 'group.field' format.");
+
+        string presenceGroup = presentIf.Substring(0, dotIdx);
+        string presenceField = presentIf.Substring(dotIdx + 1);
+        var element = MapSpfElement(elementDto, hint);
+        return new OptionalRepetitiveEntry(dto.Name, presenceGroup, presenceField, element);
     }
 
     private static SpfElementDefinition MapSpfElement(SpfElementDto dto, string hint)

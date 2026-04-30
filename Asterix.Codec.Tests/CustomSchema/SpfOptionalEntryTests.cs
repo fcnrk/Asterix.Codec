@@ -246,4 +246,74 @@ public class SpfOptionalEntryTests
         result[2].Should().Be(0, "presence flag for grp1 should be 0 (absent)");
         result[3].Should().Be(1, "presence flag for rep1 should be 1 (present)");
     }
+
+    // ── YAML loader ───────────────────────────────────────────────────────────
+
+    [Fact]
+    public void YamlLoader_LoadsOptionalGroupEntry_FromSpfExtendedYaml()
+    {
+        var schema = Asterix.Codec.Schema.YamlSchemaLoader.LoadSpfFieldSet(
+            "../../../../samples/spf_extended.yml");
+
+        var def = schema.FieldSets["SPF_EXTENDED"];
+        def.Structure.Should().ContainSingle(e => e.Name == "grp1" && e is Asterix.Codec.Schema.Models.OptionalGroupEntry);
+    }
+
+    [Fact]
+    public void YamlLoader_OptionalGroupEntry_HasCorrectFields()
+    {
+        var schema = Asterix.Codec.Schema.YamlSchemaLoader.LoadSpfFieldSet(
+            "../../../../samples/spf_extended.yml");
+
+        var grp1 = (Asterix.Codec.Schema.Models.OptionalGroupEntry)
+            schema.FieldSets["SPF_EXTENDED"].Structure.First(e => e.Name == "grp1");
+
+        grp1.Fields.Should().HaveCount(2);
+        grp1.Fields[0].Name.Should().Be("ga");
+        grp1.Fields[1].Name.Should().Be("gb");
+        grp1.PresenceGroup.Should().Be("presence");
+        grp1.PresenceField.Should().Be("grp1");
+    }
+
+    [Fact]
+    public void YamlLoader_LoadsOptionalRepetitiveEntry_FromSpfExtendedYaml()
+    {
+        var schema = Asterix.Codec.Schema.YamlSchemaLoader.LoadSpfFieldSet(
+            "../../../../samples/spf_extended.yml");
+
+        var def = schema.FieldSets["SPF_EXTENDED"];
+        def.Structure.Should().ContainSingle(e => e.Name == "rep1" && e is Asterix.Codec.Schema.Models.OptionalRepetitiveEntry);
+    }
+
+    [Fact]
+    public void YamlLoader_OptionalRepetitiveEntry_HasCorrectElement()
+    {
+        var schema = Asterix.Codec.Schema.YamlSchemaLoader.LoadSpfFieldSet(
+            "../../../../samples/spf_extended.yml");
+
+        var rep1 = (Asterix.Codec.Schema.Models.OptionalRepetitiveEntry)
+            schema.FieldSets["SPF_EXTENDED"].Structure.First(e => e.Name == "rep1");
+
+        rep1.Element.Fields.Should().HaveCount(2);
+        rep1.Element.Fields[0].Name.Should().Be("ra");
+        rep1.Element.Fields[1].Name.Should().Be("rb");
+        rep1.PresenceGroup.Should().Be("presence");
+        rep1.PresenceField.Should().Be("rep1");
+    }
+
+    [Fact]
+    public void YamlLoader_RoundTrip_ViaLoadedSchema_MatchesBinaryFixture()
+    {
+        var schema = Asterix.Codec.Schema.YamlSchemaLoader.LoadSpfFieldSet(
+            "../../../../samples/spf_extended.yml");
+        var def = schema.FieldSets["SPF_EXTENDED"];
+
+        var reader = new BitReader(PayloadFixtures.SpfExtendedPresent);
+        SpfDecodedItem item = SpfDecoder.Decode(ref reader, def, DecodeMode.Strict);
+
+        var writer = new Asterix.Codec.Binary.BitWriter();
+        SpfEncoder.Encode(writer, item, def);
+
+        writer.ToArray().Should().Equal(PayloadFixtures.SpfExtendedPresent);
+    }
 }

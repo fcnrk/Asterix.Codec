@@ -24,6 +24,7 @@ internal sealed class SpfStructureEntryDto
     public List<string>? Fields { get; set; }
     public string? PresentIf { get; set; }
     public SpfFieldDto? Field { get; set; }
+    public List<FieldDto>? GroupFields { get; set; }
 }
 
 internal sealed class SpfElementDto

@@ -1,0 +1,44 @@
+schema_version: 1
+
+spf_field_sets:
+
+  SPF_EXTENDED:
+    type: spf
+    description: "Test SPF with optional_group and optional_repetitive entry types"
+
+    structure:
+
+      - name: length
+        type: uint
+        bits: 16
+
+      - name: presence
+        type: dynamic_presence
+        bit_width: 8
+        fields:
+          - grp1
+          - rep1
+
+      - name: grp1
+        type: optional_group
+        present_if: presence.grp1
+        group_fields:
+          - name: ga
+            type: uint
+            bits: 8
+          - name: gb
+            type: uint
+            bits: 16
+
+      - name: rep1
+        type: optional_repetitive
+        present_if: presence.rep1
+        element:
+          type: group
+          fields:
+            - name: ra
+              type: uint
+              bits: 8
+            - name: rb
+              type: uint
+              bits: 8
