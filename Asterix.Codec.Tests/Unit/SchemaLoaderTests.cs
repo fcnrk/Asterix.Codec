@@ -31,8 +31,8 @@ public class SchemaLoaderTests
     {
         var schema = YamlSchemaLoader.LoadCategory(SamplesPath("cat062.yml"));
 
-        // 14 items: I062_010..I062_380 + I062_510 + SP
-        schema.Items.Should().HaveCount(14);
+        // 30 items: 28 data items + RE + SP + SPARE sentinel
+        schema.Items.Should().HaveCount(30);
     }
 
     [Fact]
@@ -41,9 +41,13 @@ public class SchemaLoaderTests
         var schema = YamlSchemaLoader.LoadCategory(SamplesPath("cat062.yml"));
         var uap = schema.Messages[0].Uap;
 
-        uap[0].Should().Be("I062_010");
-        uap[2].Should().Be("I062_040");
-        uap[11].Should().Be("I062_290");
+        uap[0].Should().Be("I062_010");   // FRN 1
+        uap[1].Should().Be("SPARE");      // FRN 2 — reserved spare
+        uap[2].Should().Be("I062_015");   // FRN 3
+        uap[11].Should().Be("I062_040");  // FRN 12
+        uap[13].Should().Be("I062_290");  // FRN 14
+        uap[33].Should().Be("RE");        // FRN 34
+        uap[34].Should().Be("SP");        // FRN 35
     }
 
     [Fact]

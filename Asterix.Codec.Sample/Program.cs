@@ -21,14 +21,14 @@ Console.WriteLine($"Loaded schemas from: {schemasDir}");
 Console.WriteLine();
 
 // Demo 1: Decode simple fixed items
-// UAP: I062_010=FRN1 (octet1 bit7), I062_040=FRN11 (octet2 bit4)
-// FSPEC octet1: 0x81 = I062_010 present + FX; octet2: 0x10 = I062_040 present
+// UAP: I062_010=FRN1 (octet1 bit7), I062_040=FRN12 (octet2 bit3)
+// FSPEC octet1: 0x81 = I062_010 present + FX; octet2: 0x08 = I062_040 present
 Console.WriteLine("--- Demo 1: Fixed items (I062_010 + I062_040) ---");
 
 byte[] simplePacket =
 [
     0x3E, 0x00, 0x09, // CAT=62, LEN=9
-    0x81, 0x10,       // FSPEC: I062_010(FRN1) + FX + I062_040(FRN11)
+    0x81, 0x08,       // FSPEC: I062_010(FRN1) + FX + I062_040(FRN12)
     0x01, 0x02,       // I062_010: SAC=1, SIC=2
     0x12, 0x34,       // I062_040: track_number=4660
 ];
@@ -42,14 +42,14 @@ PrintFixed(rec, "I062_040");
 Console.WriteLine();
 
 // Demo 2: Decode with time (I062_070, scaled field)
-// UAP: I062_010=FRN1 (oct1 bit7), I062_070=FRN3 (oct1 bit5), I062_040=FRN11 (oct2 bit4)
+// UAP: I062_010=FRN1 (oct1 bit7), I062_070=FRN4 (oct1 bit4), I062_040=FRN12 (oct2 bit3)
 // Data order follows FRN order: I062_010, I062_070, I062_040
 Console.WriteLine("--- Demo 2: Scaled time field (I062_070) ---");
 
 byte[] timePacket =
 [
     0x3E, 0x00, 0x0C, // CAT=62, LEN=12
-    0xA1, 0x10,       // FSPEC: I062_010(FRN1)+I062_070(FRN3)+FX + I062_040(FRN11)
+    0x91, 0x08,       // FSPEC: I062_010(FRN1)+I062_070(FRN4)+FX + I062_040(FRN12)
     0x01, 0x02,       // I062_010: SAC=1, SIC=2
     0x00, 0x25, 0x80, // I062_070: raw=9600 → 9600/128 = 75.0 s
     0x12, 0x34,       // I062_040: track_number=4660
@@ -62,15 +62,15 @@ PrintFixed(rec, "I062_040");
 Console.WriteLine();
 
 // Demo 3: Decode fixed acceleration item (I062_210 Calculated Acceleration)
-// UAP: I062_010=FRN1 (oct1 bit7), I062_210=FRN7 (oct1 bit1)
-// FSPEC single byte: 0x82 = I062_010(bit7) + I062_210(bit1), FX=0
+// UAP: I062_010=FRN1 (oct1 bit7), I062_210=FRN8 (oct2 bit7)
+// FSPEC: 0x81 (I062_010+FX) + 0x80 (I062_210); LEN grows by 1
 // I062_210 is 2B fixed: ax=int8 scale 0.25, ay=int8 scale 0.25
 Console.WriteLine("--- Demo 3: Fixed acceleration item (I062_210) ---");
 
 byte[] compoundPacket =
 [
-    0x3E, 0x00, 0x08, // CAT=62, LEN=8
-    0x82,             // FSPEC: I062_010(FRN1) + I062_210(FRN7), no FX
+    0x3E, 0x00, 0x09, // CAT=62, LEN=9
+    0x81, 0x80,       // FSPEC: I062_010(FRN1)+FX + I062_210(FRN8)
     0x01, 0x02,       // I062_010: SAC=1, SIC=2
     0x04, 0x08,       // I062_210: ax=4→1.0 m/s², ay=8→2.0 m/s²
 ];
@@ -81,15 +81,15 @@ PrintFixed(rec, "I062_210");
 Console.WriteLine();
 
 // Demo 4: Decode compound item (I062_290 System Track Update Ages)
-// UAP: I062_010=FRN1 (oct1 bit7), I062_290=FRN13 (oct2 bit2)
-// FSPEC: 0x81 (I062_010+FX) + 0x04 (I062_290)
+// UAP: I062_010=FRN1 (oct1 bit7), I062_290=FRN14 (oct2 bit1)
+// FSPEC: 0x81 (I062_010+FX) + 0x02 (I062_290)
 // I062_290 is compound: FSPEC byte then subitems (trk + psr)
 Console.WriteLine("--- Demo 4: Compound item (I062_290 system track update ages) ---");
 
 byte[] repetitivePacket =
 [
     0x3E, 0x00, 0x0A, // CAT=62, LEN=10
-    0x81, 0x04,       // FSPEC: I062_010(FRN1)+FX + I062_290(FRN13)
+    0x81, 0x02,       // FSPEC: I062_010(FRN1)+FX + I062_290(FRN14)
     0x01, 0x02,       // I062_010: SAC=1, SIC=2
     0xC0,             // I062_290 inner FSPEC: trk(bit7)+psr(bit6) present, FX=0
     0x28,             // I062_290/trk: raw=40 → 40×0.25=10.0 s
@@ -116,15 +116,15 @@ if (rec.TryGet("I062_290", out var repItem) && repItem is CompoundDecodedItem co
 Console.WriteLine();
 
 // Demo 5: Decode IA5 callsign (I062_245 Target Identification)
-// UAP: I062_010=FRN1 (oct1 bit7), I062_245=FRN9 (oct2 bit6)
-// FSPEC: 0x81 (I062_010+FX) + 0x40 (I062_245)
+// UAP: I062_010=FRN1 (oct1 bit7), I062_245=FRN10 (oct2 bit5)
+// FSPEC: 0x81 (I062_010+FX) + 0x20 (I062_245)
 // I062_245 = 1B header (sti 2b + spare 6b) + 6B callsign (8×6-bit IA5 = "BAW123  ")
 Console.WriteLine("--- Demo 5: IA5 string field (I062_245 callsign) ---");
 
 byte[] callsignPacket =
 [
     0x3E, 0x00, 0x0E,             // CAT=62, LEN=14
-    0x81, 0x40,                   // FSPEC: I062_010(FRN1)+FX + I062_245(FRN9)
+    0x81, 0x20,                   // FSPEC: I062_010(FRN1)+FX + I062_245(FRN10)
     0x01, 0x02,                   // I062_010: SAC=1, SIC=2
     0x00,                         // I062_245 header: sti=0, spare=0
     0x08, 0x15, 0xF1, 0xCB, 0x38, 0x20, // I062_245 callsign: "BAW123" (IA5 6-bit packed)
