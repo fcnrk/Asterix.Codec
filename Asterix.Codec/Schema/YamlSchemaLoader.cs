@@ -294,6 +294,8 @@ public static class YamlSchemaLoader
 
             "explicit" => new ExplicitItemDefinition(),
 
+            "spare" => new SpareItemDefinition(),
+
             "fspec_repetitive" => new FspecRepetitiveItemDefinition(
                 MapItem(dto.Element ?? throw new SchemaLoadException(hint,
                     "FspecRepetitive item missing 'element'."), hint)),

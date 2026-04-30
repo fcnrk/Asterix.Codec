@@ -16,6 +16,7 @@ namespace Asterix.Codec.Schema.Models;
 ///   <item><see cref="RepetitiveItemDefinition"/> — count-prefixed repetitive item</item>
 ///   <item><see cref="VariableItemDefinition"/> — FX-bit chained variable-length item</item>
 ///   <item><see cref="ExplicitItemDefinition"/> — length-prefixed opaque byte block (RE/SP)</item>
+///   <item><see cref="SpareItemDefinition"/> — reserved UAP position with no data</item>
 /// </list>
 /// </summary>
 public abstract class ItemDefinition { }
